@@ -360,6 +360,151 @@ const copy = {
   },
 };
 
+const howPageCopy: Record<
+  LanguageCode,
+  {
+    ariaPathway: string;
+    ariaSteps: string;
+    backToWorker: string;
+    detailTitle: string;
+    detailBodyOne: string;
+    detailBodyTwo: string;
+    eyebrow: string;
+    heroTitle: string;
+    heroBody: string;
+    steps: Array<{ body: string; title: string }>;
+  }
+> = {
+  en: {
+    ariaPathway: "LinkUP support pathway",
+    ariaSteps: "LinkUP usage steps",
+    backToWorker: "Worker support",
+    detailTitle: "Zero-retention worker intake",
+    detailBodyOne:
+      "Employer names, dates, amounts, contact information, and files are kept in temporary browser memory for PDF creation. Anonymous counts by region, issue, and language can go to the NGO dashboard.",
+    detailBodyTwo:
+      "When the PDF is downloaded or the tab is closed, private intake details are cleared from the app state.",
+    eyebrow: "How this works",
+    heroTitle: "From first concern to counselor-ready support",
+    heroBody:
+      "LinkUP helps workers describe urgent labor problems in plain language, then turns the intake into a structured Korean PDF for a counselor.",
+    steps: [
+      {
+        title: "1. Choose the closest issue",
+        body: "The worker starts with a simple triage choice. The first screen avoids legal language and uses clear scenario cards plus search.",
+      },
+      {
+        title: "2. Answer safely",
+        body: "Personal details stay only in the browser while the worker answers. Region, issue type, and language are used for anonymous trend data.",
+      },
+      {
+        title: "3. Download the Korean PDF",
+        body: "At the end, LinkUP formats the answers into a counselor-ready Korean document with summary, issue sections, evidence, and attachment pages.",
+      },
+      {
+        title: "4. Share with a trusted counselor",
+        body: "The worker can hand the PDF to an NGO counselor or staff member. LinkUP is an intake preparation tool, not a law firm or legal service.",
+      },
+    ],
+  },
+  ko: {
+    ariaPathway: "LinkUP 지원 절차",
+    ariaSteps: "LinkUP 이용 단계",
+    backToWorker: "노동자 지원",
+    detailTitle: "개인정보 비보관 접수 방식",
+    detailBodyOne:
+      "사업장명, 날짜, 금액, 연락처, 첨부파일은 PDF 생성을 위해 브라우저의 임시 메모리에만 보관됩니다. NGO 대시보드에는 지역, 문제 유형, 언어에 대한 익명 통계만 전송될 수 있습니다.",
+    detailBodyTwo:
+      "PDF를 다운로드하거나 탭을 닫으면 구체적인 개인정보와 답변 내용은 앱 상태에서 지워집니다.",
+    eyebrow: "이용 방법",
+    heroTitle: "처음 걱정부터 상담용 자료 준비까지",
+    heroBody:
+      "LinkUP은 노동자가 긴급한 직장 문제를 쉬운 말로 정리하도록 돕고, 그 내용을 상담사가 볼 수 있는 한국어 PDF로 만듭니다.",
+    steps: [
+      {
+        title: "1. 가장 가까운 문제 선택",
+        body: "노동자는 먼저 간단한 상황 카드를 선택합니다. 첫 화면은 어려운 법률 용어를 줄이고, 검색과 명확한 시나리오 카드로 시작합니다.",
+      },
+      {
+        title: "2. 안전하게 답변",
+        body: "답변하는 동안 개인정보는 브라우저 안에만 머뭅니다. 지역, 문제 유형, 언어는 익명 통계 데이터로만 사용됩니다.",
+      },
+      {
+        title: "3. 한국어 PDF 다운로드",
+        body: "마지막 단계에서 LinkUP은 답변을 상담용 한국어 문서로 정리합니다. 요약표, 문제별 항목, 증거 목록, 첨부 이미지가 포함됩니다.",
+      },
+      {
+        title: "4. 신뢰할 수 있는 상담사에게 공유",
+        body: "노동자는 PDF를 NGO 상담사나 담당자에게 전달할 수 있습니다. LinkUP은 접수 준비 도구이며 법률서비스가 아닙니다.",
+      },
+    ],
+  },
+  vi: {
+    ariaPathway: "Quy trình hỗ trợ LinkUP",
+    ariaSteps: "Các bước sử dụng LinkUP",
+    backToWorker: "Hỗ trợ người lao động",
+    detailTitle: "Tiếp nhận không lưu giữ dữ liệu cá nhân",
+    detailBodyOne:
+      "Tên chủ sử dụng lao động, ngày tháng, số tiền, thông tin liên hệ và tệp đính kèm chỉ được giữ tạm thời trong bộ nhớ trình duyệt để tạo PDF. Bảng điều khiển NGO chỉ có thể nhận thống kê ẩn danh theo khu vực, vấn đề và ngôn ngữ.",
+    detailBodyTwo:
+      "Khi tải PDF xuống hoặc đóng tab, các chi tiết riêng tư trong phần tiếp nhận sẽ được xóa khỏi trạng thái của ứng dụng.",
+    eyebrow: "Cách hoạt động",
+    heroTitle: "Từ lo lắng ban đầu đến hồ sơ sẵn sàng cho tư vấn viên",
+    heroBody:
+      "LinkUP giúp người lao động mô tả vấn đề lao động khẩn cấp bằng ngôn ngữ đơn giản, sau đó chuyển nội dung đó thành PDF tiếng Hàn có cấu trúc cho tư vấn viên.",
+    steps: [
+      {
+        title: "1. Chọn vấn đề gần nhất",
+        body: "Người lao động bắt đầu bằng một lựa chọn phân loại đơn giản. Màn hình đầu tiên tránh thuật ngữ pháp lý khó và dùng thẻ tình huống rõ ràng kèm tìm kiếm.",
+      },
+      {
+        title: "2. Trả lời an toàn",
+        body: "Thông tin cá nhân chỉ ở trong trình duyệt khi người lao động trả lời. Khu vực, loại vấn đề và ngôn ngữ được dùng cho dữ liệu xu hướng ẩn danh.",
+      },
+      {
+        title: "3. Tải PDF tiếng Hàn",
+        body: "Ở bước cuối, LinkUP định dạng câu trả lời thành tài liệu tiếng Hàn sẵn sàng cho tư vấn viên, gồm tóm tắt, mục theo vấn đề, chứng cứ và trang đính kèm.",
+      },
+      {
+        title: "4. Chia sẻ với tư vấn viên đáng tin cậy",
+        body: "Người lao động có thể đưa PDF cho tư vấn viên NGO hoặc nhân viên hỗ trợ. LinkUP là công cụ chuẩn bị tiếp nhận, không phải hãng luật hay dịch vụ pháp lý.",
+      },
+    ],
+  },
+  th: {
+    ariaPathway: "ขั้นตอนการสนับสนุนของ LinkUP",
+    ariaSteps: "ขั้นตอนการใช้งาน LinkUP",
+    backToWorker: "การสนับสนุนแรงงาน",
+    detailTitle: "การรับข้อมูลแบบไม่เก็บข้อมูลส่วนตัว",
+    detailBodyOne:
+      "ชื่อสถานที่ทำงาน วันที่ จำนวนเงิน ข้อมูลติดต่อ และไฟล์แนบจะถูกเก็บไว้ชั่วคราวในหน่วยความจำของเบราว์เซอร์เพื่อสร้าง PDF เท่านั้น แดชบอร์ด NGO จะรับได้เฉพาะสถิติแบบไม่ระบุตัวตนตามพื้นที่ ประเภทปัญหา และภาษา",
+    detailBodyTwo:
+      "เมื่อดาวน์โหลด PDF หรือปิดแท็บ รายละเอียดส่วนตัวในแบบฟอร์มจะถูกลบออกจากสถานะของแอป",
+    eyebrow: "วิธีใช้งาน",
+    heroTitle: "จากความกังวลแรกสู่เอกสารพร้อมให้ที่ปรึกษาตรวจ",
+    heroBody:
+      "LinkUP ช่วยให้แรงงานอธิบายปัญหาเร่งด่วนในที่ทำงานด้วยภาษาง่าย ๆ แล้วจัดทำเป็น PDF ภาษาเกาหลีที่มีโครงสร้างสำหรับที่ปรึกษา",
+    steps: [
+      {
+        title: "1. เลือกปัญหาที่ใกล้เคียงที่สุด",
+        body: "ผู้ใช้เริ่มจากการเลือกสถานการณ์ง่าย ๆ หน้าแรกหลีกเลี่ยงภาษากฎหมายที่ซับซ้อน และใช้การ์ดสถานการณ์พร้อมช่องค้นหา",
+      },
+      {
+        title: "2. ตอบอย่างปลอดภัย",
+        body: "ข้อมูลส่วนตัวจะอยู่ในเบราว์เซอร์ขณะตอบคำถามเท่านั้น พื้นที่ ประเภทปัญหา และภาษาจะใช้สำหรับข้อมูลแนวโน้มแบบไม่ระบุตัวตน",
+      },
+      {
+        title: "3. ดาวน์โหลด PDF ภาษาเกาหลี",
+        body: "เมื่อจบขั้นตอน LinkUP จะจัดรูปแบบคำตอบเป็นเอกสารภาษาเกาหลีสำหรับที่ปรึกษา พร้อมสรุป หัวข้อปัญหา หลักฐาน และหน้าไฟล์แนบ",
+      },
+      {
+        title: "4. แชร์กับที่ปรึกษาที่เชื่อถือได้",
+        body: "ผู้ใช้สามารถส่ง PDF ให้ที่ปรึกษา NGO หรือเจ้าหน้าที่สนับสนุนได้ LinkUP เป็นเครื่องมือเตรียมข้อมูล ไม่ใช่สำนักงานกฎหมายหรือบริการทางกฎหมาย",
+      },
+    ],
+  },
+};
+
 const situations: Situation[] = [
   {
     id: "wages",
@@ -1312,30 +1457,14 @@ function LanguageChoiceModal({
 }
 
 function HowItWorksPage() {
-  const text = copy.en;
+  const selectedLanguage = getSavedLanguage();
+  const text = copy[selectedLanguage];
+  const pageText = howPageCopy[selectedLanguage];
   const [pathwayStep, setPathwayStep] = useState(0);
-  const steps = [
-    {
-      icon: Globe2,
-      title: "1. Choose the closest issue",
-      body: "The worker starts with a simple triage choice. The first screen avoids legal language and uses clear scenario cards plus search.",
-    },
-    {
-      icon: CheckCircle2,
-      title: "2. Answer safely",
-      body: "Personal details stay only in the browser while the worker answers. Region, issue type, and language are used for anonymous trend data.",
-    },
-    {
-      icon: Download,
-      title: "3. Download the Korean PDF",
-      body: "At the end, LinkUP formats the answers into a counselor-ready Korean document with summary, issue sections, evidence, and attachment pages.",
-    },
-    {
-      icon: MapPinned,
-      title: "4. Share with a trusted counselor",
-      body: "The worker can hand the PDF to an NGO counselor or staff member. LinkUP is an intake preparation tool, not a law firm or legal service.",
-    },
-  ];
+  const steps = pageText.steps.map((step, index) => ({
+    ...step,
+    icon: [Globe2, CheckCircle2, Download, MapPinned][index] ?? CheckCircle2,
+  }));
 
   useEffect(() => {
     const timer = window.setInterval(() => {
@@ -1346,26 +1475,24 @@ function HowItWorksPage() {
   }, [text.pathwaySteps.length]);
 
   return (
-    <main className="site-shell how-page">
+    <main className="site-shell how-page" lang={selectedLanguage}>
       <header className="site-nav">
         <a className="brand-link" href="#/" aria-label="LinkUP worker site">
           <img alt="LinkUP" className="brand-logo" src="/linkup-wordmark.png" />
         </a>
         <nav aria-label="Primary navigation">
-          <a href="#/">Worker support</a>
+          <a href="#/">{pageText.backToWorker}</a>
           <a href="#/admin">NGO Admin</a>
         </nav>
       </header>
 
       <section className="how-hero" aria-labelledby="how-title">
-        <p className="eyebrow">How this works</p>
-        <h1 id="how-title">From first concern to counselor-ready support</h1>
-        <p>
-          LinkUP helps workers describe urgent labor problems in plain language, then turns the intake into a structured Korean PDF for a counselor.
-        </p>
+        <p className="eyebrow">{pageText.eyebrow}</p>
+        <h1 id="how-title">{pageText.heroTitle}</h1>
+        <p>{pageText.heroBody}</p>
       </section>
 
-      <section className="how-pathway-section" aria-label="LinkUP support pathway">
+      <section className="how-pathway-section" aria-label={pageText.ariaPathway}>
         <div className="support-pathway">
           <div className="pathway-header">
             <strong>{text.pathwayTitle}</strong>
@@ -1408,7 +1535,7 @@ function HowItWorksPage() {
         </div>
       </section>
 
-      <section className="how-card-grid" aria-label="LinkUP usage steps">
+      <section className="how-card-grid" aria-label={pageText.ariaSteps}>
         {steps.map(({ body, icon: Icon, title }) => (
           <article className="how-step-card" key={title}>
             <span>
@@ -1420,14 +1547,10 @@ function HowItWorksPage() {
         ))}
       </section>
 
-      <section className="how-detail-panel" aria-label="Privacy and data handling">
-        <h2>Zero-retention worker intake</h2>
-        <p>
-          Employer names, dates, amounts, contact information, and files are kept in temporary browser memory for PDF creation. Anonymous counts by region, issue, and language can go to the NGO dashboard.
-        </p>
-        <p>
-          When the PDF is downloaded or the tab is closed, private intake details are cleared from the app state.
-        </p>
+      <section className="how-detail-panel" aria-label={pageText.detailTitle}>
+        <h2>{pageText.detailTitle}</h2>
+        <p>{pageText.detailBodyOne}</p>
+        <p>{pageText.detailBodyTwo}</p>
       </section>
     </main>
   );
