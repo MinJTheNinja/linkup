@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 7410 3900">
+  <rect width="7410" height="3900" fill="#b22234"/>
+  <path stroke="#fff" stroke-width="300" d="M0 450h7410M0 1050h7410M0 1650h7410M0 2250h7410M0 2850h7410M0 3450h7410"/>
+  <rect width="2964" height="2100" fill="#3c3b6e"/>
+  <g fill="#fff">
+    <g id="s18">
+      <g id="s9">
+        <circle cx="247" cy="210" r="70"/>
+        <circle cx="741" cy="210" r="70"/>
+        <circle cx="1235" cy="210" r="70"/>
+        <circle cx="1729" cy="210" r="70"/>
+        <circle cx="2223" cy="210" r="70"/>
+        <circle cx="2717" cy="210" r="70"/>
+      </g>
+      <use href="#s9" y="420"/>
+    </g>
+    <use href="#s18" y="840"/>
+    <use href="#s18" y="1680"/>
+    <g id="s8">
+      <circle cx="494" cy="420" r="70"/>
+      <circle cx="988" cy="420" r="70"/>
+      <circle cx="1482" cy="420" r="70"/>
+      <circle cx="1976" cy="420" r="70"/>
+      <circle cx="2470" cy="420" r="70"/>
+    </g>
+    <use href="#s8" y="840"/>
+    <use href="#s8" y="1680"/>
+  </g>
+</svg>

@@ -6,6 +6,7 @@ import {
   BriefcaseBusiness,
   CheckCircle2,
   Download,
+  ChevronDown,
   Factory,
   FileText,
   Globe2,
@@ -17,6 +18,7 @@ import {
   LogOut,
   MapPinned,
   PieChart,
+  Search,
   Stethoscope,
   TrendingUp,
   Volume2,
@@ -51,6 +53,7 @@ type CompletedIntake = {
   issueId: string;
   language: LanguageCode;
   region: string;
+  selectedOptions: Record<number, string[]>;
 };
 
 type UploadedFile = {
@@ -65,6 +68,8 @@ type QuestionMeta = {
   optionsKo?: string[];
   textKo?: string;
 };
+
+type LocalizedOptions = Partial<Record<LanguageCode, string[]>>;
 
 type CountItem = {
   count: number;
@@ -83,6 +88,8 @@ type AdminStats = {
   trendSeries: TrendSeries[];
   total: number;
 };
+
+type Route = "admin" | "home" | "how-it-works";
 
 const ADMIN_CODE = "LINKUP-NGO-2026";
 const convexSiteUrl = import.meta.env.VITE_CONVEX_SITE_URL as string | undefined;
@@ -163,17 +170,18 @@ const languageNames: Record<string, string> = {
 const chartColors = ["#1e3a8a", "#10b981", "#38bdf8", "#f59e0b", "#8b5cf6", "#ef4444"];
 let activeTtsAudio: HTMLAudioElement | null = null;
 
-const languages: Array<{ code: LanguageCode; label: string; shortLabel: string }> = [
-  { code: "en", label: "English", shortLabel: "EN" },
-  { code: "ko", label: "한국어", shortLabel: "KO" },
-  { code: "vi", label: "Tiếng Việt", shortLabel: "VI" },
-  { code: "th", label: "ไทย", shortLabel: "TH" },
+const languages: Array<{ code: LanguageCode; flagSrc: string; label: string; shortLabel: string }> = [
+  { code: "en", flagSrc: "/flags/us.svg", label: "English", shortLabel: "EN" },
+  { code: "ko", flagSrc: "/flags/kr.svg", label: "한국어", shortLabel: "KR" },
+  { code: "vi", flagSrc: "/flags/vn.svg", label: "Tiếng Việt", shortLabel: "VI" },
+  { code: "th", flagSrc: "/flags/th.svg", label: "ไทย", shortLabel: "TH" },
 ];
 
 const copy = {
   en: {
     hero: "What problem are you facing right now?",
-    support: "Choose the closest situation. LinkUP will ask only what is needed.",
+    heroTitle: "Prepare a counselor-ready intake",
+    support: "Organize a workplace issue into a Korean PDF for NGO review. No account required.",
     emergency: "Immediate danger? Call 112 or ask a counselor now.",
     step: "Step 2 of 4",
     stepTitle: "Payday details",
@@ -185,6 +193,7 @@ const copy = {
     stepOf: (step: number, total: number) => `Step ${step} of ${total}`,
     answerHelp: "Answer in any language. Short, approximate answers are okay.",
     regionLabel: "Workplace region",
+    regionHelp: "This helps route your case to the right regional office or counselor.",
     regionParentPlaceholder: "Select province or region",
     subregionLabel: "Select detailed region (city/district)",
     subregionPlaceholder: "Select detailed region (city/district)",
@@ -203,10 +212,21 @@ const copy = {
     readQuestion: "Read question aloud",
     ttsMissing: "This browser does not have a voice for this language. Try Chrome or Edge with language voices installed.",
     ttsPlaying: "Reading the question aloud.",
+    legalNotice:
+      "Privacy and legal notice: LinkUP does not collect or store your private details. This tool helps prepare information for a counselor and is not a law firm, lawyer, or substitute for legal advice.",
+    pathwayTitle: "From first concern to counselor-ready support",
+    pathwaySteps: ["Choose issue", "Answer safely", "Download PDF", "Share with counselor"],
+    triagePanelTitle: "What problem are you facing right now?",
+    searchPlaceholder: "Search by issue, keyword, or symptom",
+    howThisWorks: "How this works",
+    localOnlyLabel: "Saved locally",
+    pdfOutputLabel: "PDF in Korean",
+    selectedLabel: "Selected issue",
   },
   ko: {
     hero: "지금 어떤 문제가 있나요?",
-    support: "가장 가까운 상황을 선택하세요. LinkUP은 필요한 정보만 묻습니다.",
+    heroTitle: "상담사가 바로 볼 수 있는 접수 자료를 준비하세요.",
+    support: "직장 문제를 정리해 한국어 PDF로 만들 수 있습니다. 계정은 필요하지 않습니다.",
     emergency: "즉시 위험한가요? 112에 전화하거나 상담사에게 요청하세요.",
     step: "4단계 중 2단계",
     stepTitle: "급여일 정보",
@@ -218,6 +238,7 @@ const copy = {
     stepOf: (step: number, total: number) => `${total}단계 중 ${step}단계`,
     answerHelp: "어떤 언어로 답해도 괜찮습니다. 짧고 대략적인 답변도 괜찮습니다.",
     regionLabel: "근무 지역",
+    regionHelp: "지역을 선택하면 사건을 담당할 수 있는 관할 기관이나 상담사를 찾는 데 도움이 됩니다.",
     regionParentPlaceholder: "상위 지역 선택",
     subregionLabel: "세부 지역 선택 (시/군/구)",
     subregionPlaceholder: "세부 지역 선택 (시/군/구)",
@@ -236,10 +257,21 @@ const copy = {
     readQuestion: "질문 읽어주기",
     ttsMissing: "이 브라우저에 해당 언어 음성이 없습니다. Chrome 또는 Edge에서 언어 음성을 설치해 주세요.",
     ttsPlaying: "질문을 음성으로 읽고 있습니다.",
+    legalNotice:
+      "개인정보 및 법률 안내: LinkUP은 개인적인 세부 정보를 수집하거나 저장하지 않습니다. 이 도구는 상담사가 확인할 자료를 준비하도록 돕는 서비스이며, 변호사 또는 법률 자문을 대체하지 않습니다.",
+    pathwayTitle: "처음 걱정부터 상담 준비까지",
+    pathwaySteps: ["문제 선택", "안전하게 답변", "PDF 다운로드", "상담사와 공유"],
+    triagePanelTitle: "지금 어떤 문제가 있나요?",
+    searchPlaceholder: "문제, 키워드, 증상으로 검색",
+    howThisWorks: "이용 방법",
+    localOnlyLabel: "기기 안에만 임시 저장",
+    pdfOutputLabel: "한국어 PDF 생성",
+    selectedLabel: "선택한 문제",
   },
   vi: {
     hero: "Bạn đang gặp vấn đề gì ngay bây giờ?",
-    support: "Chọn tình huống gần nhất. LinkUP chỉ hỏi thông tin cần thiết.",
+    heroTitle: "Chuẩn bị hồ sơ để tư vấn viên xem ngay.",
+    support: "Sắp xếp vấn đề nơi làm việc thành PDF tiếng Hàn để NGO xem xét. Không cần tài khoản.",
     emergency: "Đang nguy hiểm? Gọi 112 hoặc yêu cầu tư vấn viên ngay.",
     step: "Bước 2 / 4",
     stepTitle: "Thông tin ngày trả lương",
@@ -251,6 +283,7 @@ const copy = {
     stepOf: (step: number, total: number) => `Bước ${step} / ${total}`,
     answerHelp: "Bạn có thể trả lời bằng bất kỳ ngôn ngữ nào. Câu trả lời ngắn hoặc ước lượng đều được.",
     regionLabel: "Khu vực làm việc",
+    regionHelp: "Thông tin này giúp kết nối vụ việc với văn phòng khu vực hoặc tư vấn viên phù hợp.",
     regionParentPlaceholder: "Select province or region",
     subregionLabel: "Select detailed region (city/district)",
     subregionPlaceholder: "Select detailed region (city/district)",
@@ -269,10 +302,21 @@ const copy = {
     readQuestion: "Đọc câu hỏi",
     ttsMissing: "Trình duyệt này chưa có giọng đọc cho ngôn ngữ này. Hãy thử Chrome hoặc Edge có cài giọng đọc.",
     ttsPlaying: "Đang đọc câu hỏi.",
+    legalNotice:
+      "Thông báo về quyền riêng tư và pháp lý: LinkUP không thu thập hoặc lưu trữ thông tin cá nhân chi tiết của bạn. Công cụ này chỉ giúp chuẩn bị thông tin cho tư vấn viên và không phải là dịch vụ pháp lý hay lời khuyên pháp lý.",
+    pathwayTitle: "Từ lo lắng ban đầu đến hỗ trợ sẵn sàng cho tư vấn viên",
+    pathwaySteps: ["Chọn vấn đề", "Trả lời an toàn", "Tải PDF", "Chia sẻ với tư vấn viên"],
+    triagePanelTitle: "Bạn đang gặp vấn đề gì ngay bây giờ?",
+    searchPlaceholder: "Tìm theo vấn đề, từ khóa hoặc triệu chứng",
+    howThisWorks: "Cách hoạt động",
+    localOnlyLabel: "Chỉ lưu trên thiết bị",
+    pdfOutputLabel: "PDF tiếng Hàn",
+    selectedLabel: "Vấn đề đã chọn",
   },
   th: {
     hero: "ตอนนี้คุณกำลังเจอปัญหาอะไร?",
-    support: "เลือกสถานการณ์ที่ใกล้เคียงที่สุด LinkUP จะถามเฉพาะข้อมูลที่จำเป็น",
+    heroTitle: "เตรียมข้อมูลให้ที่ปรึกษาตรวจได้ทันที",
+    support: "จัดระเบียบปัญหาในที่ทำงานเป็น PDF ภาษาเกาหลีสำหรับ NGO โดยไม่ต้องสร้างบัญชี",
     emergency: "มีอันตรายทันทีหรือไม่? โทร 112 หรือขอความช่วยเหลือจากที่ปรึกษา",
     step: "ขั้นตอน 2 จาก 4",
     stepTitle: "รายละเอียดวันจ่ายเงิน",
@@ -284,6 +328,7 @@ const copy = {
     stepOf: (step: number, total: number) => `ขั้นตอน ${step} จาก ${total}`,
     answerHelp: "ตอบเป็นภาษาใดก็ได้ คำตอบสั้น ๆ หรือโดยประมาณก็ใช้ได้",
     regionLabel: "พื้นที่ทำงาน",
+    regionHelp: "ข้อมูลนี้ช่วยส่งเรื่องไปยังสำนักงานเขตหรือที่ปรึกษาที่เหมาะสม",
     regionParentPlaceholder: "Select province or region",
     subregionLabel: "Select detailed region (city/district)",
     subregionPlaceholder: "Select detailed region (city/district)",
@@ -302,6 +347,16 @@ const copy = {
     readQuestion: "อ่านคำถาม",
     ttsMissing: "เบราว์เซอร์นี้ยังไม่มีเสียงสำหรับภาษานี้ ลองใช้ Chrome หรือ Edge ที่ติดตั้งเสียงภาษาไว้",
     ttsPlaying: "กำลังอ่านคำถาม",
+    legalNotice:
+      "ประกาศความเป็นส่วนตัวและกฎหมาย: LinkUP ไม่เก็บหรือบันทึกรายละเอียดส่วนตัวของคุณ เครื่องมือนี้ช่วยเตรียมข้อมูลสำหรับที่ปรึกษาเท่านั้น และไม่ใช่บริการทางกฎหมายหรือคำแนะนำทางกฎหมาย",
+    pathwayTitle: "จากปัญหาแรกสู่ข้อมูลพร้อมสำหรับที่ปรึกษา",
+    pathwaySteps: ["เลือกปัญหา", "ตอบอย่างปลอดภัย", "ดาวน์โหลด PDF", "แชร์กับที่ปรึกษา"],
+    triagePanelTitle: "ตอนนี้คุณกำลังเจอปัญหาอะไร?",
+    searchPlaceholder: "ค้นหาตามปัญหา คำสำคัญ หรืออาการ",
+    howThisWorks: "วิธีใช้งาน",
+    localOnlyLabel: "เก็บไว้ในอุปกรณ์นี้",
+    pdfOutputLabel: "PDF ภาษาเกาหลี",
+    selectedLabel: "ปัญหาที่เลือก",
   },
 };
 
@@ -526,6 +581,33 @@ const scenarioQuestions: Record<string, Record<LanguageCode, string[]>> = {
   },
 };
 
+const unpaidWagesPetitionQuestions: Record<LanguageCode, string[]> = {
+  en: [
+    "Worker details: please enter your name, visa type, and contact number.",
+    "Workplace details: please enter the company/workplace name and your boss or employer's name.",
+    "Employment details: when did you start working, when did you stop or are you still working, and do you have a written labor contract?",
+    "Unpaid wage details: what months or dates were unpaid, approximately how much is owed, and what evidence do you have?",
+  ],
+  ko: [
+    "인적사항: 성명, 비자 종류, 연락처를 적어주세요.",
+    "사업장 정보: 회사 또는 사업장 이름과 사장님/고용주 이름을 적어주세요.",
+    "근로 형태: 언제부터 언제까지 일했는지, 지금도 근무 중인지, 근로계약서가 있는지 알려주세요.",
+    "체불 내용: 임금을 받지 못한 기간, 대략적인 체불 금액, 가지고 있는 증거를 알려주세요.",
+  ],
+  vi: [
+    "Thông tin người lao động: vui lòng nhập tên, loại visa và số liên lạc.",
+    "Thông tin nơi làm việc: nhập tên công ty/nơi làm việc và tên chủ hoặc người sử dụng lao động.",
+    "Chi tiết việc làm: bạn bắt đầu làm khi nào, đã nghỉ hay vẫn đang làm, và có hợp đồng lao động bằng văn bản không?",
+    "Chi tiết lương chưa trả: tháng/ngày nào chưa được trả, số tiền khoảng bao nhiêu, và bạn có bằng chứng gì?",
+  ],
+  th: [
+    "ข้อมูลคนงาน: กรุณากรอกชื่อ ประเภทวีซ่า และเบอร์ติดต่อ",
+    "ข้อมูลที่ทำงาน: กรอกชื่อบริษัท/สถานที่ทำงาน และชื่อนายจ้างหรือหัวหน้า",
+    "รายละเอียดการทำงาน: เริ่มทำงานเมื่อไร หยุดทำงานแล้วหรือยังทำอยู่ และมีสัญญาจ้างเป็นลายลักษณ์อักษรหรือไม่",
+    "รายละเอียดค่าจ้างค้างจ่าย: เดือนไหนหรือวันไหนยังไม่ได้รับเงิน จำนวนประมาณเท่าไร และมีหลักฐานอะไรบ้าง",
+  ],
+};
+
 const questionMeta: Record<string, QuestionMeta[]> = {
   wages: [
     {
@@ -629,12 +711,318 @@ const questionMeta: Record<string, QuestionMeta[]> = {
   ],
 };
 
+const localizedQuestionOptions: Record<string, Record<number, LocalizedOptions>> = {
+  wages: {
+    2: {
+      en: ["Written labor contract exists", "No written contract", "I am not sure"],
+      ko: ["근로계약서 보유", "근로계약서 미보유", "잘 모르겠어요"],
+      vi: ["Có hợp đồng lao động bằng văn bản", "Không có hợp đồng bằng văn bản", "Tôi không chắc"],
+      th: ["มีสัญญาจ้างเป็นลายลักษณ์อักษร", "ไม่มีสัญญาเป็นลายลักษณ์อักษร", "ไม่แน่ใจ"],
+    },
+    3: {
+      en: [
+        "Labor contract",
+        "Bank statements showing salary deposits",
+        "Timecard or attendance records",
+        "Text messages or KakaoTalk with employer",
+        "I do not have evidence right now",
+      ],
+      vi: [
+        "Hợp đồng lao động",
+        "Sao kê ngân hàng có tiền lương",
+        "Thẻ chấm công hoặc hồ sơ giờ làm",
+        "Tin nhắn hoặc KakaoTalk với chủ sử dụng lao động",
+        "Hiện tại tôi chưa có bằng chứng",
+      ],
+      th: [
+        "สัญญาจ้างงาน",
+        "รายการบัญชีธนาคารที่แสดงเงินเดือน",
+        "บัตรลงเวลาหรือบันทึกการเข้างาน",
+        "ข้อความหรือ KakaoTalk กับนายจ้าง",
+        "ตอนนี้ยังไม่มีหลักฐาน",
+      ],
+    },
+  },
+  medical: {
+    0: {
+      en: ["Yes, while I was working", "No", "I am not sure"],
+      vi: ["Có, khi tôi đang làm việc", "Không", "Tôi không chắc"],
+      th: ["ใช่ ระหว่างทำงาน", "ไม่ใช่", "ไม่แน่ใจ"],
+    },
+    2: {
+      en: [
+        "Korean National Health Insurance",
+        "Private insurance",
+        "No insurance",
+        "I am not sure",
+      ],
+      vi: [
+        "Bảo hiểm y tế quốc dân Hàn Quốc",
+        "Bảo hiểm tư nhân",
+        "Không có bảo hiểm",
+        "Tôi không chắc",
+      ],
+      th: [
+        "ประกันสุขภาพแห่งชาติของเกาหลี",
+        "ประกันเอกชน",
+        "ไม่มีประกัน",
+        "ไม่แน่ใจ",
+      ],
+    },
+    3: {
+      en: [
+        "I visited a hospital or clinic",
+        "I received emergency treatment",
+        "I have receipts",
+        "I have a diagnosis document",
+        "I have not visited a hospital yet",
+      ],
+      vi: [
+        "Tôi đã đến bệnh viện hoặc phòng khám",
+        "Tôi đã được điều trị cấp cứu",
+        "Tôi có hóa đơn",
+        "Tôi có giấy chẩn đoán",
+        "Tôi chưa đến bệnh viện",
+      ],
+      th: [
+        "ไปโรงพยาบาลหรือคลินิกแล้ว",
+        "ได้รับการรักษาฉุกเฉินแล้ว",
+        "มีใบเสร็จ",
+        "มีใบวินิจฉัย",
+        "ยังไม่ได้ไปโรงพยาบาล",
+      ],
+    },
+  },
+  contract: {
+    0: {
+      en: ["E-9", "H-2", "E-7", "G-1", "I am not sure", "Other"],
+      vi: ["E-9", "H-2", "E-7", "G-1", "Tôi không chắc", "Khác"],
+      th: ["E-9", "H-2", "E-7", "G-1", "ไม่แน่ใจ", "อื่น ๆ"],
+    },
+    2: {
+      en: [
+        "I want to change workplaces",
+        "My employer threatened early termination",
+        "Both apply",
+        "No",
+      ],
+      vi: [
+        "Tôi muốn đổi nơi làm việc",
+        "Chủ sử dụng lao động dọa chấm dứt hợp đồng sớm",
+        "Cả hai đều đúng",
+        "Không",
+      ],
+      th: [
+        "ต้องการเปลี่ยนที่ทำงาน",
+        "นายจ้างขู่ยกเลิกสัญญาก่อนกำหนด",
+        "ทั้งสองอย่าง",
+        "ไม่ใช่",
+      ],
+    },
+    3: {
+      en: [
+        "Employer agreed to sign",
+        "Employer is refusing",
+        "I have not asked yet",
+        "I am not sure",
+      ],
+      vi: [
+        "Chủ sử dụng lao động đồng ý ký",
+        "Chủ sử dụng lao động từ chối",
+        "Tôi chưa hỏi",
+        "Tôi không chắc",
+      ],
+      th: [
+        "นายจ้างยอมลงนาม",
+        "นายจ้างปฏิเสธ",
+        "ยังไม่ได้ถาม",
+        "ไม่แน่ใจ",
+      ],
+    },
+  },
+  safety: {
+    0: {
+      en: [
+        "Unprotected machinery",
+        "Not enough safety gear",
+        "Toxic fumes or chemicals",
+        "Extreme heat or cold",
+        "Other",
+      ],
+      vi: [
+        "Máy móc không có bảo vệ",
+        "Thiếu thiết bị an toàn",
+        "Khí độc hoặc hóa chất",
+        "Quá nóng hoặc quá lạnh",
+        "Khác",
+      ],
+      th: [
+        "เครื่องจักรไม่มีอุปกรณ์ป้องกัน",
+        "อุปกรณ์ความปลอดภัยไม่เพียงพอ",
+        "ควันพิษหรือสารเคมี",
+        "ร้อนหรือหนาวจัด",
+        "อื่น ๆ",
+      ],
+    },
+    1: {
+      en: [
+        "An accident already happened",
+        "A near-miss happened",
+        "No accident yet, but it is dangerous",
+        "I am not sure",
+      ],
+      vi: [
+        "Đã xảy ra tai nạn",
+        "Đã suýt xảy ra tai nạn",
+        "Chưa có tai nạn nhưng rất nguy hiểm",
+        "Tôi không chắc",
+      ],
+      th: [
+        "เกิดอุบัติเหตุแล้ว",
+        "เกือบเกิดอุบัติเหตุ",
+        "ยังไม่เกิด แต่เป็นอันตราย",
+        "ไม่แน่ใจ",
+      ],
+    },
+    3: {
+      en: [
+        "I can take photos",
+        "I can take videos",
+        "It is not safe to do that",
+        "I already have evidence",
+      ],
+      vi: [
+        "Tôi có thể chụp ảnh",
+        "Tôi có thể quay video",
+        "Làm vậy không an toàn",
+        "Tôi đã có bằng chứng",
+      ],
+      th: [
+        "ถ่ายรูปได้",
+        "ถ่ายวิดีโอได้",
+        "ทำแบบนั้นไม่ปลอดภัย",
+        "มีหลักฐานอยู่แล้ว",
+      ],
+    },
+  },
+  housing: {
+    0: {
+      en: [
+        "Container",
+        "Vinyl greenhouse structure",
+        "Shared apartment or dormitory",
+        "Motel room",
+        "Other",
+      ],
+      vi: [
+        "Container",
+        "Nhà kính vinyl",
+        "Căn hộ chung hoặc ký túc xá",
+        "Phòng motel",
+        "Khác",
+      ],
+      th: [
+        "ตู้คอนเทนเนอร์",
+        "โครงสร้างโรงเรือนไวนิล",
+        "อพาร์ตเมนต์รวมหรือหอพัก",
+        "ห้องโมเทล",
+        "อื่น ๆ",
+      ],
+    },
+    2: {
+      en: ["Yes, deducted from my salary", "No", "I am not sure"],
+      vi: ["Có, bị trừ từ lương của tôi", "Không", "Tôi không chắc"],
+      th: ["ใช่ หักจากเงินเดือน", "ไม่ใช่", "ไม่แน่ใจ"],
+    },
+    3: {
+      en: [
+        "Lock problem",
+        "Running water problem",
+        "Heating problem",
+        "Air conditioning problem",
+        "I have photos or videos",
+      ],
+      vi: [
+        "Vấn đề khóa cửa",
+        "Vấn đề nước sinh hoạt",
+        "Vấn đề sưởi ấm",
+        "Vấn đề điều hòa",
+        "Tôi có ảnh hoặc video",
+      ],
+      th: [
+        "ปัญหากุญแจหรือล็อก",
+        "ปัญหาน้ำใช้",
+        "ปัญหาเครื่องทำความร้อน",
+        "ปัญหาเครื่องปรับอากาศ",
+        "มีรูปภาพหรือวิดีโอ",
+      ],
+    },
+  },
+};
+
 const languageDemand = [
   { language: "Vietnamese", value: 41, color: "#1E3A8A" },
   { language: "Thai", value: 27, color: "#10B981" },
   { language: "Tagalog", value: 18, color: "#38BDF8" },
   { language: "Indonesian", value: 14, color: "#F59E0B" },
 ];
+
+const scenarioDocumentConfig: Record<
+  string,
+  {
+    detailTitle: string;
+    documentType: string;
+    evidenceTitle: string;
+    narrative: (answers: string[], region: string) => string;
+    partyTitle: string;
+    workTitle: string;
+  }
+> = {
+  contract: {
+    detailTitle: "계약/비자 분쟁 경위",
+    documentType: "비자/근로계약 상담용 접수서 초안",
+    evidenceTitle: "계약 및 고용변동 관련 자료",
+    partyTitle: "인적사항 및 체류 정보",
+    workTitle: "사업장 및 계약 정보",
+    narrative: (answers, region) =>
+      `노동자는 ${region} 지역 사업장과 관련하여 비자, 근로계약, 사업장 변경 또는 고용변동 절차에 관한 어려움을 호소하고 있습니다. ` +
+      `노동자가 진술한 체류자격 및 계약 상황은 다음과 같으며, 상담사는 사업장 변경 필요성, 고용주의 동의 여부, 계약 종료 위협 여부를 함께 확인해 주시기 바랍니다. ` +
+      `${answers[2] || "구체적인 분쟁 내용은 상담 과정에서 추가 확인이 필요합니다."}`,
+  },
+  housing: {
+    detailTitle: "주거 위협 및 숙소 문제 경위",
+    documentType: "고용주 제공 숙소 상담용 접수서 초안",
+    evidenceTitle: "숙소 상태 및 공제 관련 자료",
+    partyTitle: "인적사항 및 숙소 제공자 정보",
+    workTitle: "사업장 및 숙소 정보",
+    narrative: (answers, region) =>
+      `노동자는 ${region} 지역 사업장 또는 고용주가 제공한 숙소와 관련하여 퇴거 압박, 잠금장치, 수도, 냉난방, 숙소비 공제 등의 문제를 진술하였습니다. ` +
+      `상담사는 숙소 제공 방식, 임금에서 공제된 금액, 퇴거 통보 또는 위협의 구체적 시점, 안전상 위험 여부를 우선 확인해 주시기 바랍니다. ` +
+      `${answers[2] || "구체적인 주거 문제는 상담 과정에서 추가 확인이 필요합니다."}`,
+  },
+  medical: {
+    detailTitle: "의료/산재 발생 경위",
+    documentType: "의료 긴급상황 상담용 접수서 초안",
+    evidenceTitle: "치료 및 진단 관련 자료",
+    partyTitle: "인적사항 및 보험 정보",
+    workTitle: "사업장 및 발생 장소 정보",
+    narrative: (answers, region) =>
+      `노동자는 ${region} 지역 사업장에서 근무 중 또는 근무와 관련된 상황에서 부상이나 질병이 발생했다고 진술하였습니다. ` +
+      `상담사는 발생 시각, 다친 부위, 현재 치료 여부, 건강보험 또는 민간보험 가입 여부, 병원 영수증과 진단서 보유 여부를 확인해 주시기 바랍니다. ` +
+      `${answers[2] || "구체적인 의료 경위는 상담 과정에서 추가 확인이 필요합니다."}`,
+  },
+  safety: {
+    detailTitle: "사업장 안전 위험 경위",
+    documentType: "사업장 안전 상담용 접수서 초안",
+    evidenceTitle: "안전 위험 및 신고 관련 자료",
+    partyTitle: "인적사항",
+    workTitle: "사업장 및 위험 요소 정보",
+    narrative: (answers, region) =>
+      `노동자는 ${region} 지역 사업장에서 기계, 보호장비, 유해물질, 온도, 작업환경 등과 관련한 안전 위험을 진술하였습니다. ` +
+      `상담사는 이미 사고 또는 아차사고가 있었는지, 관리자에게 알렸는지, 사진이나 영상 등 안전하게 확보 가능한 증거가 있는지 확인해 주시기 바랍니다. ` +
+      `${answers[2] || "구체적인 안전 위험 내용은 상담 과정에서 추가 확인이 필요합니다."}`,
+  },
+};
 
 export default function App({ useConvex: _useConvex = false }: AppProps) {
   const [route, setRoute] = useState(() => getRouteFromHash());
@@ -645,22 +1033,44 @@ export default function App({ useConvex: _useConvex = false }: AppProps) {
     return () => window.removeEventListener("hashchange", handleHashChange);
   }, []);
 
-  return route === "admin" ? <AdminPage /> : <WorkerSite />;
+  if (route === "admin") {
+    return <AdminPage />;
+  }
+
+  if (route === "how-it-works") {
+    return <HowItWorksPage />;
+  }
+
+  return <WorkerSite />;
 }
 
-function getRouteFromHash() {
-  return window.location.hash.replace("#/", "") === "admin" ? "admin" : "home";
+function getRouteFromHash(): Route {
+  const route = window.location.hash.replace("#/", "");
+  return route === "admin" || route === "how-it-works" ? route : "home";
 }
 
 function WorkerSite() {
-  const [language, setLanguage] = useState<LanguageCode>("en");
+  const [language, setLanguage] = useState<LanguageCode>(() => getSavedLanguage());
   const [selectedIssue, setSelectedIssue] = useState("wages");
   const [isPdfReady, setIsPdfReady] = useState(false);
   const [completedIntake, setCompletedIntake] = useState<CompletedIntake | null>(null);
   const [resetToken, setResetToken] = useState(0);
+  const [triageSearch, setTriageSearch] = useState("");
+  const [isTriageExpanded, setIsTriageExpanded] = useState(false);
+  const [isLanguageMenuOpen, setIsLanguageMenuOpen] = useState(false);
+  const [showLanguageModal, setShowLanguageModal] = useState(
+    () => localStorage.getItem("linkup-language-selected") !== "true",
+  );
   const text = copy[language];
+  const filteredSituations = situations.filter((situation) => {
+    const searchText = `${situation.label[language]} ${situation.detail[language]} ${situation.label.en} ${situation.detail.en}`.toLowerCase();
+    return searchText.includes(triageSearch.trim().toLowerCase());
+  });
+  const shownSituations =
+    isTriageExpanded || triageSearch.trim() ? filteredSituations : filteredSituations.slice(0, 3);
   const selectedSituation = useMemo(
-    () => situations.find((situation) => situation.id === selectedIssue) ?? situations[0],
+    () =>
+      situations.find((situation) => situation.id === selectedIssue) ?? situations[0],
     [selectedIssue],
   );
 
@@ -671,13 +1081,25 @@ function WorkerSite() {
     };
   }, []);
 
+  const chooseLanguage = (nextLanguage: LanguageCode) => {
+    setLanguage(nextLanguage);
+    localStorage.setItem("linkup-language", nextLanguage);
+    localStorage.setItem("linkup-language-selected", "true");
+    setShowLanguageModal(false);
+    setIsLanguageMenuOpen(false);
+  };
+
   return (
     <main className="site-shell" lang={language}>
+      {showLanguageModal ? (
+        <LanguageChoiceModal selectedLanguage={language} onSelect={chooseLanguage} />
+      ) : null}
       <header className="site-nav">
         <a className="brand-link" href="#top" aria-label="LinkUP home">
           <img alt="LinkUP" className="brand-logo" src="/linkup-wordmark.png" />
         </a>
         <nav aria-label="Primary navigation">
+          <a href="#/how-it-works">{text.howThisWorks}</a>
           <a href="#/admin">NGO Admin</a>
         </nav>
       </header>
@@ -685,45 +1107,49 @@ function WorkerSite() {
       <section className="worker-hero" id="top">
         <div className="hero-copy">
           <p className="eyebrow">Safe multilingual triage</p>
-          <h1 aria-label={text.hero}>
-            {language === "en" ? (
-              <>
-                <span className="hero-line">What problem are</span>
-                <span className="hero-line">you facing right now?</span>
-              </>
-            ) : (
-              text.hero
-            )}
-          </h1>
+          <h1>{text.heroTitle}</h1>
           <p>{text.support}</p>
-          <div className="language-actions" aria-label="Choose interface language">
-            {languages.map((item) => (
-              <button
-                className={item.code === language ? "active" : ""}
-                key={item.code}
-                onClick={() => setLanguage(item.code)}
-                type="button"
-              >
-                <Languages size={16} />
-                <span>{item.label}</span>
-              </button>
-            ))}
+          <div className="trust-strip" aria-label="LinkUP privacy and output highlights">
+            <span>No account</span>
+            <span>Private by default</span>
+            <span>Korean PDF output</span>
           </div>
+          <LanguageSelector
+            isOpen={isLanguageMenuOpen}
+            onSelect={chooseLanguage}
+            onToggle={() => setIsLanguageMenuOpen((current) => !current)}
+            selectedLanguage={language}
+          />
         </div>
 
-        <div className="triage-tablet" aria-label="Triage choices">
-          <div className="tablet-status">
-            <span>9:41</span>
-            <span>LinkUP</span>
-          </div>
-          <div className="tablet-content">
-            <div className="tablet-topbar">
+      </section>
+
+      <section className="product-workspace" aria-label="LinkUP intake workspace">
+        <section className="triage-panel-section" aria-label="Triage choices">
+          <div className="triage-panel">
+            <div className="triage-panel-topbar">
               <img alt="LinkUP" className="brand-mark" src="/linkup-wordmark.png" />
-              <span className="language-chip">{languages.find((item) => item.code === language)?.shortLabel}</span>
+              <div className="product-status-row" aria-label="Current intake status">
+                <span>
+                  <strong>{text.selectedLabel}</strong>
+                  {selectedSituation.label[language]}
+                </span>
+                <span>{text.pdfOutputLabel}</span>
+                <span>{text.localOnlyLabel}</span>
+              </div>
             </div>
-            <h2>{text.hero}</h2>
+            <h2>{text.triagePanelTitle}</h2>
+            <label className="triage-search">
+              <Search size={20} />
+              <input
+                onChange={(event: { currentTarget: HTMLInputElement }) => setTriageSearch(event.currentTarget.value)}
+                placeholder={text.searchPlaceholder}
+                type="search"
+                value={triageSearch}
+              />
+            </label>
             <div className="situation-grid">
-              {situations.map(({ detail, icon: Icon, id, label, tone }) => (
+              {shownSituations.map(({ detail, icon: Icon, id, label, tone }) => (
                 <button
                   className={`situation-button ${tone} ${selectedIssue === id ? "selected" : ""}`}
                   key={id}
@@ -734,6 +1160,11 @@ function WorkerSite() {
                   }}
                   type="button"
                 >
+                  {selectedIssue === id ? (
+                    <span className="selected-check" aria-hidden="true">
+                      <CheckCircle2 size={17} />
+                    </span>
+                  ) : null}
                   <span className="situation-mark">
                     <Icon size={23} />
                   </span>
@@ -742,44 +1173,261 @@ function WorkerSite() {
                 </button>
               ))}
             </div>
-            <div className="emergency-strip">
-              <AlertTriangle size={18} />
-              <span>{text.emergency}</span>
+            {!triageSearch.trim() && filteredSituations.length > 3 ? (
+              <button
+                className={`expand-situations-button ${isTriageExpanded ? "expanded" : ""}`}
+                onClick={() => setIsTriageExpanded((current) => !current)}
+                type="button"
+              >
+                <span>{isTriageExpanded ? "Show fewer situations" : "Show more situations"}</span>
+                <ChevronDown size={18} />
+              </button>
+            ) : null}
+          </div>
+        </section>
+
+        <section className="workflow-section" id="intake">
+          <div className="section-heading">
+            <p className="eyebrow">{text.intakeEyebrow}</p>
+            <h2>{text.intakeHeading}</h2>
+          </div>
+          <div className={`workflow-grid ${isPdfReady ? "with-pdf" : "intake-only"}`}>
+            <IntakeCard
+              language={language}
+              onPdfReady={(intake) => {
+                setCompletedIntake(intake);
+                setIsPdfReady(true);
+              }}
+              onPdfReset={() => {
+                setIsPdfReady(false);
+                setCompletedIntake(null);
+              }}
+              resetToken={resetToken}
+              selectedSituation={selectedSituation}
+            />
+            {isPdfReady && completedIntake ? (
+              <PdfDownloadPanel
+                intake={completedIntake}
+                onCompleted={() => {
+                  setCompletedIntake(null);
+                  setIsPdfReady(false);
+                  setResetToken((current) => current + 1);
+                }}
+              />
+            ) : null}
+          </div>
+        </section>
+      </section>
+      <section className="worker-legal-notice" aria-label="Privacy and legal notice">
+        <p>{text.legalNotice}</p>
+      </section>
+    </main>
+  );
+}
+
+function getSavedLanguage(): LanguageCode {
+  const savedLanguage = localStorage.getItem("linkup-language");
+  return savedLanguage === "en" || savedLanguage === "ko" || savedLanguage === "vi" || savedLanguage === "th"
+    ? savedLanguage
+    : "en";
+}
+
+function LanguageSelector({
+  isOpen,
+  onSelect,
+  onToggle,
+  selectedLanguage,
+}: {
+  isOpen: boolean;
+  onSelect: (language: LanguageCode) => void;
+  onToggle: () => void;
+  selectedLanguage: LanguageCode;
+}) {
+  const selected = languages.find((item) => item.code === selectedLanguage) ?? languages[0];
+
+  return (
+    <div className="language-picker">
+      <button
+        aria-expanded={isOpen}
+        aria-haspopup="listbox"
+        className="language-current"
+        onClick={onToggle}
+        type="button"
+      >
+        <img alt="" aria-hidden="true" className="language-flag-img" src={selected.flagSrc} />
+        <span>{selected.label}</span>
+        <ChevronDown size={17} />
+      </button>
+      {isOpen ? (
+        <div className="language-menu" role="listbox" aria-label="Choose interface language">
+          {languages.map((item) => (
+            <button
+              aria-selected={item.code === selectedLanguage}
+              className={item.code === selectedLanguage ? "selected" : ""}
+              key={item.code}
+              onClick={() => onSelect(item.code)}
+              role="option"
+              type="button"
+            >
+              <img alt="" aria-hidden="true" className="language-flag-img" src={item.flagSrc} />
+              <span>{item.label}</span>
+              <small>{item.shortLabel}</small>
+            </button>
+          ))}
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+function LanguageChoiceModal({
+  onSelect,
+  selectedLanguage,
+}: {
+  onSelect: (language: LanguageCode) => void;
+  selectedLanguage: LanguageCode;
+}) {
+  return (
+    <div className="language-modal-backdrop" role="presentation">
+      <section className="language-modal" aria-labelledby="language-modal-title" role="dialog" aria-modal="true">
+        <p className="eyebrow">Welcome to LinkUP</p>
+        <h2 id="language-modal-title">Choose your language</h2>
+        <p>This helps LinkUP show questions and guidance in the language that feels safest for you.</p>
+        <div className="language-modal-grid">
+          {languages.map((item) => (
+            <button
+              className={item.code === selectedLanguage ? "selected" : ""}
+              key={item.code}
+              onClick={() => onSelect(item.code)}
+              type="button"
+            >
+              <img alt="" aria-hidden="true" className="language-flag-img" src={item.flagSrc} />
+              <span>{item.label}</span>
+            </button>
+          ))}
+        </div>
+      </section>
+    </div>
+  );
+}
+
+function HowItWorksPage() {
+  const text = copy.en;
+  const [pathwayStep, setPathwayStep] = useState(0);
+  const steps = [
+    {
+      icon: Globe2,
+      title: "1. Choose the closest issue",
+      body: "The worker starts with a simple triage choice. The first screen avoids legal language and uses clear scenario cards plus search.",
+    },
+    {
+      icon: CheckCircle2,
+      title: "2. Answer safely",
+      body: "Personal details stay only in the browser while the worker answers. Region, issue type, and language are used for anonymous trend data.",
+    },
+    {
+      icon: Download,
+      title: "3. Download the Korean PDF",
+      body: "At the end, LinkUP formats the answers into a counselor-ready Korean document with summary, issue sections, evidence, and attachment pages.",
+    },
+    {
+      icon: MapPinned,
+      title: "4. Share with a trusted counselor",
+      body: "The worker can hand the PDF to an NGO counselor or staff member. LinkUP is an intake preparation tool, not a law firm or legal service.",
+    },
+  ];
+
+  useEffect(() => {
+    const timer = window.setInterval(() => {
+      setPathwayStep((current) => (current + 1) % text.pathwaySteps.length);
+    }, 3000);
+
+    return () => window.clearInterval(timer);
+  }, [text.pathwaySteps.length]);
+
+  return (
+    <main className="site-shell how-page">
+      <header className="site-nav">
+        <a className="brand-link" href="#/" aria-label="LinkUP worker site">
+          <img alt="LinkUP" className="brand-logo" src="/linkup-wordmark.png" />
+        </a>
+        <nav aria-label="Primary navigation">
+          <a href="#/">Worker support</a>
+          <a href="#/admin">NGO Admin</a>
+        </nav>
+      </header>
+
+      <section className="how-hero" aria-labelledby="how-title">
+        <p className="eyebrow">How this works</p>
+        <h1 id="how-title">From first concern to counselor-ready support</h1>
+        <p>
+          LinkUP helps workers describe urgent labor problems in plain language, then turns the intake into a structured Korean PDF for a counselor.
+        </p>
+      </section>
+
+      <section className="how-pathway-section" aria-label="LinkUP support pathway">
+        <div className="support-pathway">
+          <div className="pathway-header">
+            <strong>{text.pathwayTitle}</strong>
+          </div>
+          <div className="pathway-carousel" aria-live="polite" aria-label={text.pathwayTitle}>
+            {text.pathwaySteps.map((step, index) => {
+              const StepIcon = [Globe2, CheckCircle2, Download, MapPinned][index] ?? CheckCircle2;
+              return (
+                <article
+                  className={`pathway-step ${pathwayStep === index ? "active" : ""}`}
+                  key={step}
+                  aria-hidden={pathwayStep !== index}
+                >
+                  <span className="pathway-number">{index + 1}</span>
+                  <span className="pathway-icon">
+                    <StepIcon size={28} />
+                  </span>
+                  <span>{step}</span>
+                </article>
+              );
+            })}
+            <div className="pathway-controls" aria-label="Choose support step">
+              {text.pathwaySteps.map((step, index) => (
+                <button
+                  className={pathwayStep === index ? "active" : ""}
+                  key={step}
+                  onClick={() => setPathwayStep(index)}
+                  type="button"
+                  aria-label={step}
+                >
+                  <span>{index + 1}</span>
+                </button>
+              ))}
             </div>
+          </div>
+          <div className="pathway-note">
+            <CheckCircle2 size={18} />
+            <span>{text.legalNotice}</span>
           </div>
         </div>
       </section>
 
-      <section className="workflow-section" id="intake">
-        <div className="section-heading">
-          <p className="eyebrow">{text.intakeEyebrow}</p>
-          <h2>{text.intakeHeading}</h2>
-        </div>
-        <div className={`workflow-grid ${isPdfReady ? "with-pdf" : "intake-only"}`}>
-          <IntakeCard
-            language={language}
-            onPdfReady={(intake) => {
-              setCompletedIntake(intake);
-              setIsPdfReady(true);
-            }}
-            onPdfReset={() => {
-              setIsPdfReady(false);
-              setCompletedIntake(null);
-            }}
-            resetToken={resetToken}
-            selectedSituation={selectedSituation}
-          />
-          {isPdfReady && completedIntake ? (
-            <PdfDownloadPanel
-              intake={completedIntake}
-              onCompleted={() => {
-                setCompletedIntake(null);
-                setIsPdfReady(false);
-                setResetToken((current) => current + 1);
-              }}
-            />
-          ) : null}
-        </div>
+      <section className="how-card-grid" aria-label="LinkUP usage steps">
+        {steps.map(({ body, icon: Icon, title }) => (
+          <article className="how-step-card" key={title}>
+            <span>
+              <Icon size={26} />
+            </span>
+            <h2>{title}</h2>
+            <p>{body}</p>
+          </article>
+        ))}
+      </section>
+
+      <section className="how-detail-panel" aria-label="Privacy and data handling">
+        <h2>Zero-retention worker intake</h2>
+        <p>
+          Employer names, dates, amounts, contact information, and files are kept in temporary browser memory for PDF creation. Anonymous counts by region, issue, and language can go to the NGO dashboard.
+        </p>
+        <p>
+          When the PDF is downloaded or the tab is closed, private intake details are cleared from the app state.
+        </p>
       </section>
     </main>
   );
@@ -799,30 +1447,39 @@ function IntakeCard({
   selectedSituation: Situation;
 }) {
   const text = copy[language];
-  const scenarioQuestionSet = scenarioQuestions[selectedSituation.id] ?? scenarioQuestions.wages;
+  const scenarioQuestionSet =
+    selectedSituation.id === "wages"
+      ? unpaidWagesPetitionQuestions
+      : scenarioQuestions[selectedSituation.id] ?? scenarioQuestions.wages;
   const metadata = questionMeta[selectedSituation.id] ?? questionMeta.wages;
-  const questions = (scenarioQuestionSet[language] ?? scenarioQuestionSet.en).map((question, index) =>
-    language === "ko" && metadata[index]?.textKo ? metadata[index].textKo : question,
-  );
+  const baseQuestions = scenarioQuestionSet[language] ?? scenarioQuestionSet.en;
+  const questions = [text.regionLabel, ...baseQuestions];
   const [questionIndex, setQuestionIndex] = useState(0);
-  const [answers, setAnswers] = useState<string[]>(() => Array(4).fill(""));
+  const [answers, setAnswers] = useState<string[]>(() => Array(baseQuestions.length).fill(""));
   const [attachments, setAttachments] = useState<Record<number, UploadedFile[]>>({});
+  const [selectedOptions, setSelectedOptions] = useState<Record<number, string[]>>({});
   const [isReviewing, setIsReviewing] = useState(false);
   const [region, setRegion] = useState("");
   const [subregion, setSubregion] = useState("");
   const [ttsStatus, setTtsStatus] = useState("");
-  const currentAnswer = answers[questionIndex] ?? "";
-  const currentMeta = metadata[questionIndex];
-  const currentOptions = language === "ko" ? currentMeta?.optionsKo ?? [] : [];
-  const currentFiles = attachments[questionIndex] ?? [];
+  const answerIndex = questionIndex - 1;
+  const isRegionStep = questionIndex === 0;
+  const currentAnswer = isRegionStep ? "" : answers[answerIndex] ?? "";
+  const currentSelectedOptions = isRegionStep ? [] : selectedOptions[answerIndex] ?? [];
+  const currentMeta = isRegionStep ? undefined : metadata[answerIndex];
+  const currentOptions = isRegionStep
+    ? []
+    : getQuestionOptions(selectedSituation.id, answerIndex, language, currentMeta);
+  const currentFiles = isRegionStep ? [] : attachments[answerIndex] ?? [];
   const selectedRegionGroup = regionGroups.find((item) => item.label === region);
   const completedRegion = region ? (subregion ? `${region} ${subregion}` : region) : "지역 미선택";
   const displayRegionsInEnglish = language !== "ko";
 
   useEffect(() => {
     setQuestionIndex(0);
-    setAnswers(Array(4).fill(""));
+    setAnswers(Array(baseQuestions.length).fill(""));
     setAttachments({});
+    setSelectedOptions({});
     setIsReviewing(false);
     setRegion("");
     setSubregion("");
@@ -850,6 +1507,7 @@ function IntakeCard({
       issueId: selectedSituation.id,
       language,
       region: completedRegion,
+      selectedOptions,
     };
     onPdfReady(completed);
     void submitIntakeToConvex(completed).catch((error) => {
@@ -865,27 +1523,38 @@ function IntakeCard({
   };
 
   const toggleOption = (option: string) => {
-    const selected = splitSelectedOptions(currentAnswer);
-    const nextSelected = selected.includes(option)
-      ? selected.filter((item) => item !== option)
-      : [...selected, option];
-    updateAnswer(nextSelected.join(", "));
+    const nextSelected = currentSelectedOptions.includes(option)
+      ? currentSelectedOptions.filter((item) => item !== option)
+      : [...currentSelectedOptions, option];
+    setSelectedOptions((current) => ({
+      ...current,
+      [answerIndex]: nextSelected,
+    }));
+    onPdfReset();
   };
 
   const updateFiles = async (fileList: FileList | null) => {
+    if (answerIndex < 0) {
+      return;
+    }
+
     const files = fileList ? [...fileList] : [];
     const mapped = await Promise.all(files.map(fileToUploadedFile));
     setAttachments((current) => ({
       ...current,
-      [questionIndex]: mapped,
+      [answerIndex]: mapped,
     }));
     onPdfReset();
   };
 
   const updateAnswer = (value: string) => {
+    if (answerIndex < 0) {
+      return;
+    }
+
     setAnswers((current) => {
       const next = [...current];
-      next[questionIndex] = value;
+      next[answerIndex] = value;
       return next;
     });
     onPdfReset();
@@ -913,12 +1582,17 @@ function IntakeCard({
             <p>{text.reviewHelp}</p>
           </div>
           <div className="review-list">
-            {questions.map((question, index) => (
+            {baseQuestions.map((question, index) => (
               <article className="review-item" key={question}>
                 <div>
-                  <span>{text.stepOf(index + 1, questions.length)}</span>
+                  <span>{text.stepOf(index + 2, questions.length)}</span>
                   <h4>{question}</h4>
                   <p>{answers[index]?.trim() || text.notAnswered}</p>
+                  {selectedOptions[index]?.length ? (
+                    <p className="review-files">
+                      {selectedOptions[index].join(", ")}
+                    </p>
+                  ) : null}
                   {attachments[index]?.length ? (
                     <p className="review-files">
                       첨부: {attachments[index].map((file) => file.name).join(", ")}
@@ -928,7 +1602,7 @@ function IntakeCard({
                 <button
                   className="review-edit-button"
                   onClick={() => {
-                    setQuestionIndex(index);
+                    setQuestionIndex(index + 1);
                     setIsReviewing(false);
                     onPdfReset();
                   }}
@@ -963,7 +1637,6 @@ function IntakeCard({
         <BriefcaseBusiness size={24} />
         <span className="issue-context">{selectedSituation.label[language]}</span>
         <h3 id="payday-question">{questions[questionIndex]}</h3>
-        <p>{language === "ko" && currentMeta?.helpKo ? currentMeta.helpKo : text.answerHelp}</p>
         <button
           className="tts-button"
           onClick={() => {
@@ -987,7 +1660,7 @@ function IntakeCard({
           {currentOptions.map((option) => (
             <label className="mcq-option" key={option}>
               <input
-                checked={splitSelectedOptions(currentAnswer).includes(option)}
+                checked={currentSelectedOptions.includes(option)}
                 onChange={() => toggleOption(option)}
                 type="checkbox"
               />
@@ -997,53 +1670,58 @@ function IntakeCard({
         </div>
       ) : null}
       <div className="field-stack">
-        <label className="input-label">
-          <span>{text.regionLabel}</span>
-          <select
-            onChange={(event: { currentTarget: HTMLSelectElement }) => {
-              setRegion(event.currentTarget.value);
-              setSubregion("");
-              onPdfReset();
-            }}
-            value={region}
-          >
-            <option value="">{text.regionParentPlaceholder}</option>
-            {regionGroups.map((item) => (
-              <option key={item.label} value={item.label}>
-                {displayRegionsInEnglish ? item.labelEn : item.label}
-              </option>
-            ))}
-          </select>
-        </label>
-        {selectedRegionGroup ? (
-          <label className="input-label subregion-field">
-            <span>{text.subregionLabel}</span>
-            <select
-              onChange={(event: { currentTarget: HTMLSelectElement }) => {
-                setSubregion(event.currentTarget.value);
-                onPdfReset();
-              }}
-              value={subregion}
-            >
-              <option value="">{text.subregionPlaceholder}</option>
-              {selectedRegionGroup.cities.map((city, index) => (
-                <option key={city} value={city}>
-                  {displayRegionsInEnglish ? selectedRegionGroup.citiesEn[index] ?? city : city}
-                </option>
-              ))}
-            </select>
+        {isRegionStep ? (
+          <>
+            <label className="input-label">
+              <span>{text.regionLabel}</span>
+              <select
+                onChange={(event: { currentTarget: HTMLSelectElement }) => {
+                  setRegion(event.currentTarget.value);
+                  setSubregion("");
+                  onPdfReset();
+                }}
+                value={region}
+              >
+                <option value="">{text.regionParentPlaceholder}</option>
+                {regionGroups.map((item) => (
+                  <option key={item.label} value={item.label}>
+                    {displayRegionsInEnglish ? item.labelEn : item.label}
+                  </option>
+                ))}
+              </select>
+            </label>
+            {selectedRegionGroup ? (
+              <label className="input-label subregion-field">
+                <span>{text.subregionLabel}</span>
+                <select
+                  onChange={(event: { currentTarget: HTMLSelectElement }) => {
+                    setSubregion(event.currentTarget.value);
+                    onPdfReset();
+                  }}
+                  value={subregion}
+                >
+                  <option value="">{text.subregionPlaceholder}</option>
+                  {selectedRegionGroup.cities.map((city, index) => (
+                    <option key={city} value={city}>
+                      {displayRegionsInEnglish ? selectedRegionGroup.citiesEn[index] ?? city : city}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            ) : null}
+          </>
+        ) : (
+          <label className="input-label">
+            <span>{text.answerLabel}</span>
+            <textarea
+              onChange={(event: { currentTarget: HTMLTextAreaElement }) =>
+                updateAnswer(event.currentTarget.value)
+              }
+              placeholder={text.answerPlaceholder}
+              value={currentAnswer}
+            />
           </label>
-        ) : null}
-        <label className="input-label">
-          <span>{text.answerLabel}</span>
-          <textarea
-            onChange={(event: { currentTarget: HTMLTextAreaElement }) =>
-              updateAnswer(event.currentTarget.value)
-            }
-            placeholder={text.answerPlaceholder}
-            value={currentAnswer}
-          />
-        </label>
+        )}
         {currentMeta?.allowUpload ? (
           <label className="input-label upload-label">
             <span>증거 파일 업로드</span>
@@ -1063,7 +1741,15 @@ function IntakeCard({
       </div>
       <div className="intake-confirmation" aria-live="polite">
         <CheckCircle2 size={17} />
-        <span>{currentAnswer ? text.answerSaved : text.answerPending}</span>
+        <span>
+          {isRegionStep
+            ? region
+              ? text.answerSaved
+              : text.answerPending
+            : currentAnswer || currentSelectedOptions.length
+              ? text.answerSaved
+              : text.answerPending}
+        </span>
       </div>
       <div className="wizard-actions">
         <button
@@ -1127,6 +1813,14 @@ function PdfDownloadPanel({
 }
 
 async function downloadCounselorPdf(intake: CompletedIntake) {
+  if (intake.issueId === "wages") {
+    await downloadUnpaidWagesPetitionPdf(intake);
+    return;
+  }
+
+  await downloadScenarioCounselorPdf(intake);
+  return;
+
   const situation = situations.find((item) => item.id === intake.issueId) ?? situations[0];
   const baseKoreanQuestions = scenarioQuestions[intake.issueId]?.ko ?? scenarioQuestions.wages.ko;
   const koreanQuestions = baseKoreanQuestions.map((question, index) =>
@@ -1192,6 +1886,175 @@ async function downloadCounselorPdf(intake: CompletedIntake) {
   URL.revokeObjectURL(url);
 }
 
+async function downloadScenarioCounselorPdf(intake: CompletedIntake) {
+  const situation = situations.find((item) => item.id === intake.issueId) ?? situations[0];
+  const config = scenarioDocumentConfig[intake.issueId] ?? scenarioDocumentConfig.contract;
+  const translatedAnswers = await Promise.all(
+    intake.answers.map((answer) => translateAnswerToKorean(answer, intake.language)),
+  );
+  const selectedEvidence = intake.selectedOptions[3] ?? [];
+  const translatedEvidence = selectedEvidence.length
+    ? await translateAnswerToKorean(selectedEvidence.join(", "), intake.language)
+    : "선택된 증거 항목 없음";
+  const allAttachments = Object.entries(intake.attachments).flatMap(([questionIndex, files]) =>
+    files.map((file) => ({
+      ...file,
+      questionNumber: Number(questionIndex) + 1,
+    })),
+  );
+  const attachmentSummary = allAttachments.length
+    ? allAttachments.map((file) => `질문 ${file.questionNumber}: ${file.name}`)
+    : ["첨부파일 없음"];
+  const createdAt = new Date();
+  const summaryRows = [
+    ["문서 유형", config.documentType],
+    ["시나리오", situation.label.ko],
+    ["지역", intake.region],
+    ["접수 일시", createdAt.toLocaleString("ko-KR")],
+    ["번역 언어", formatLanguageName(intake.language)],
+  ];
+  const lines = [
+    `LinkUP ${config.documentType}`,
+    `1. ${config.partyTitle}`,
+    `노동자 정보: ${translatedAnswers[0] || "미기재"}`,
+    `사업장 지역: ${intake.region}`,
+    "",
+    `2. ${config.workTitle}`,
+    `사업장/고용주 정보: ${translatedAnswers[1] || "미기재"}`,
+    "",
+    `3. ${config.detailTitle}`,
+    config.narrative(translatedAnswers, intake.region),
+    `노동자 진술 요약: ${translatedAnswers[2] || "미기재"}`,
+    "",
+    `4. ${config.evidenceTitle}`,
+    `선택 항목: ${translatedEvidence}`,
+    `추가 진술: ${translatedAnswers[3] || "미기재"}`,
+    "첨부파일:",
+    ...attachmentSummary,
+    "",
+    "상담사 확인 메모",
+    "[                                                        ]",
+    "",
+    "상담 기관명:",
+    "[                                                        ]",
+    "",
+    "개인정보 안내: 인적사항과 구체 답변은 PDF 생성을 위해 브라우저 메모리에만 임시 보관되며, 대시보드에는 익명화된 통계만 전송됩니다.",
+    "법률 안내: 본 문서는 상담 및 접수 준비를 돕는 초안이며, 법률 자문 또는 법률서비스가 아닙니다.",
+  ];
+  const pdf = await createRasterPdf({
+    attachmentImages: allAttachments.filter((file) => file.dataUrl),
+    lines,
+    summaryRows,
+  });
+  const blob = new Blob([pdf], { type: "application/pdf" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = `linkup-${intake.issueId}-counselor-draft.pdf`;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(url);
+}
+
+async function downloadUnpaidWagesPetitionPdf(intake: CompletedIntake) {
+  const translatedAnswers = await Promise.all(
+    intake.answers.map((answer) => translateAnswerToKorean(answer, intake.language)),
+  );
+  const allAttachments = Object.entries(intake.attachments).flatMap(([questionIndex, files]) =>
+    files.map((file) => ({
+      ...file,
+      questionNumber: Number(questionIndex) + 1,
+    })),
+  );
+  const createdAt = new Date();
+  const evidenceOptions = getQuestionOptions("wages", 3, intake.language, questionMeta.wages[3]);
+  const selectedEvidence = intake.selectedOptions[3] ?? [];
+  const evidenceRows = [
+    { ko: "근로계약서", optionIndex: 0 },
+    { ko: "통장 거래 내역 또는 급여 입금 내역", optionIndex: 1 },
+    { ko: "출퇴근 기록 또는 근무시간 기록", optionIndex: 2 },
+    { ko: "문자메시지 또는 카카오톡 대화", optionIndex: 3 },
+  ].map((item) => {
+    const localizedOption = evidenceOptions[item.optionIndex];
+    const hasEvidence = localizedOption ? selectedEvidence.includes(localizedOption) : false;
+    return `${hasEvidence ? "보유" : "미보유"} - ${item.ko}`;
+  });
+  const noEvidenceOption = evidenceOptions[4];
+  const contractOptions = getQuestionOptions("wages", 2, intake.language, questionMeta.wages[2]);
+  const selectedContract = intake.selectedOptions[2] ?? [];
+  const contractStatus = selectedContract.length
+    ? selectedContract
+        .map((option) => {
+          const index = contractOptions.indexOf(option);
+          return ["근로계약서 보유", "근로계약서 미보유", "근로계약서 보유 여부 불명"][index] ?? option;
+        })
+        .join(", ")
+    : "미기재";
+  const attachmentSummary = allAttachments.length
+    ? allAttachments.map((file) => `질문 ${file.questionNumber}: ${file.name}`)
+    : ["첨부파일 없음"];
+
+  const workerDetails = translatedAnswers[0] || "미기재";
+  const workplaceDetails = translatedAnswers[1] || "미기재";
+  const employmentDetails = translatedAnswers[2] || "미기재";
+  const delinquencyDetails = translatedAnswers[3] || "미기재";
+  const narrative =
+    `위 진정인은 위 사업장에서 근무하였고, 아래 체불 내용에 해당하는 임금, 연장근로수당, 퇴직금 등 금품을 현재까지 지급받지 못하였다고 진술합니다. ` +
+    `구체적인 근무 기간 및 체불 기간, 금액은 노동자가 제공한 답변을 바탕으로 아래와 같이 정리하였으며, 상담사는 원자료와 증거자료를 확인한 뒤 고용노동부 진정 절차를 준비해 주시기 바랍니다.`;
+
+  const summaryRows = [
+    ["문서 유형", "임금체불 진정서 초안"],
+    ["지역", intake.region],
+    ["접수 일시", createdAt.toLocaleString("ko-KR")],
+    ["번역 언어", formatLanguageName(intake.language)],
+    ["개인정보 보관", "PDF 생성 후 브라우저 메모리에서 삭제"],
+  ];
+  const lines = [
+    "LinkUP 고용노동부 상담용 임금체불 진정서 초안",
+    "1. 인적사항",
+    `노동자 정보: ${workerDetails}`,
+    `사업장 및 고용주 정보: ${workplaceDetails}`,
+    `사업장 지역: ${intake.region}`,
+    "",
+    "2. 근로 형태",
+    `근무 기간 및 근로 형태: ${employmentDetails}`,
+    `근로계약서 여부: ${contractStatus}`,
+    "",
+    "3. 체불 경위",
+    narrative,
+    `노동자 진술 요약: ${delinquencyDetails}`,
+    "",
+    "4. 증거 자료 목록",
+    ...(noEvidenceOption && selectedEvidence.includes(noEvidenceOption)
+      ? ["노동자는 현재 보유한 증거자료가 없다고 선택했습니다."]
+      : evidenceRows),
+    "첨부파일:",
+    ...attachmentSummary,
+    "",
+    "상담 기관명:",
+    "[                                                        ]",
+    "",
+    "개인정보 안내: 위 인적사항 및 구체 답변은 PDF 생성을 위해 브라우저 메모리에만 임시 보관되며, 대시보드에는 익명화된 통계만 전송됩니다.",
+    "법률 안내: 본 문서는 상담 및 접수 준비를 돕는 초안이며, 법률 자문 또는 법률서비스가 아닙니다.",
+  ];
+
+  const pdf = await createRasterPdf({
+    attachmentImages: allAttachments.filter((file) => file.dataUrl),
+    lines,
+    summaryRows,
+  });
+  const blob = new Blob([pdf], { type: "application/pdf" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = "linkup-unpaid-wages-moel-draft.pdf";
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(url);
+}
+
 async function translateAnswerToKorean(answer: string, sourceLanguage: LanguageCode) {
   const trimmed = answer.trim();
   if (!trimmed) {
@@ -1213,7 +2076,16 @@ async function translateAnswerToKorean(answer: string, sourceLanguage: LanguageC
     }
   }
 
-  return `[상담사 번역 필요 - 원문/${sourceLanguage}] ${trimmed}`;
+  try {
+    const directTranslation = await translateWithMyMemoryDirect(trimmed, sourceLanguage);
+    if (directTranslation.trim()) {
+      return directTranslation.trim();
+    }
+  } catch (error) {
+    console.warn("LinkUP direct translation fallback failed.", error);
+  }
+
+  return `자동번역 실패 - 원문/${sourceLanguage}: ${trimmed}`;
 }
 
 function getUrgencyLabel(issueId: string) {
@@ -1230,6 +2102,19 @@ function getUrgencyLabel(issueId: string) {
 
 function containsHangul(text: string) {
   return /[가-힣]/.test(text);
+}
+
+function getQuestionOptions(
+  issueId: string,
+  questionIndex: number,
+  language: LanguageCode,
+  meta?: QuestionMeta,
+) {
+  if (language === "ko") {
+    return meta?.optionsKo ?? [];
+  }
+
+  return localizedQuestionOptions[issueId]?.[questionIndex]?.[language] ?? [];
 }
 
 function splitSelectedOptions(answer: string) {
@@ -1266,13 +2151,6 @@ function readFileAsDataUrl(file: File) {
 async function speakQuestion(question: string, language: LanguageCode): Promise<"missing" | "playing"> {
   stopActiveTts();
 
-  if (language === "th" || language === "vi") {
-    const remotePlayed = await playRemoteQuestionAudio(question, language);
-    if (remotePlayed) {
-      return "playing";
-    }
-  }
-
   const browserPlayed = await speakQuestionWithBrowserVoice(question, language);
   if (browserPlayed) {
     return "playing";
@@ -1302,10 +2180,6 @@ async function speakQuestionWithBrowserVoice(question: string, language: Languag
   const voices = await loadSpeechVoices();
   const voice = chooseSpeechVoice(voices, targetLang);
 
-  if (!voice && (language === "th" || language === "vi")) {
-    return false;
-  }
-
   return new Promise<boolean>((resolve) => {
     const utterance = new SpeechSynthesisUtterance(question);
     let didResolve = false;
@@ -1317,7 +2191,7 @@ async function speakQuestionWithBrowserVoice(question: string, language: Languag
     };
 
     utterance.lang = targetLang;
-    utterance.rate = language === "th" || language === "vi" ? 0.86 : 0.92;
+    utterance.rate = language === "th" ? 0.82 : language === "vi" ? 0.88 : 0.92;
     if (voice) {
       utterance.voice = voice;
     }
@@ -1361,12 +2235,15 @@ async function playRemoteQuestionAudio(question: string, language: LanguageCode)
   }
 
   const targetLang = getTtsLanguageTag(language).split("-")[0];
+  const fullTargetLang = getTtsLanguageTag(language);
   const text = question.slice(0, 180);
   const sources = [
     convexSiteUrl
       ? `${convexSiteUrl}/question-tts?language=${targetLang}&text=${encodeURIComponent(text)}`
       : "",
+    `https://translate.google.com/translate_tts?ie=UTF-8&client=tw-ob&tl=${fullTargetLang}&q=${encodeURIComponent(text)}`,
     `https://translate.google.com/translate_tts?ie=UTF-8&client=tw-ob&tl=${targetLang}&q=${encodeURIComponent(text)}`,
+    `https://translate.google.com/translate_tts?ie=UTF-8&client=gtx&tl=${fullTargetLang}&q=${encodeURIComponent(text)}`,
     `https://translate.google.com/translate_tts?ie=UTF-8&client=gtx&tl=${targetLang}&q=${encodeURIComponent(text)}`,
   ].filter(Boolean);
 
@@ -1436,6 +2313,32 @@ async function translateWithFreeApi(text: string, sourceLanguage: LanguageCode =
   }
 
   return data.translation;
+}
+
+async function translateWithMyMemoryDirect(text: string, sourceLanguage: LanguageCode = "en") {
+  const url = new URL("https://api.mymemory.translated.net/get");
+  url.searchParams.set("q", text.slice(0, 450));
+  url.searchParams.set("langpair", `${normalizeTranslationSource(sourceLanguage)}|ko`);
+
+  const response = await fetch(url.toString());
+  const data = await response.json();
+
+  if (!response.ok || !isRecord(data) || !isRecord(data.responseData)) {
+    throw new Error("Direct translation failed.");
+  }
+
+  const translatedText = data.responseData.translatedText;
+  if (typeof translatedText !== "string") {
+    throw new Error("Direct translation response was invalid.");
+  }
+
+  return translatedText;
+}
+
+function normalizeTranslationSource(sourceLanguage: LanguageCode) {
+  return sourceLanguage === "vi" || sourceLanguage === "th" || sourceLanguage === "en"
+    ? sourceLanguage
+    : "en";
 }
 
 async function submitIntakeToConvex(intake: CompletedIntake) {
