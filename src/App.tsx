@@ -180,8 +180,8 @@ const languages: Array<{ code: LanguageCode; flagSrc: string; label: string; sho
 const copy = {
   en: {
     hero: "What problem are you facing right now?",
-    heroTitle: "Prepare a counselor-ready intake",
-    support: "Organize a workplace issue into a Korean PDF for NGO review. No account required.",
+    heroTitle: "Prepare your situation for support in Korean.",
+    support: "Answer a few clear questions. Your private details stay on this device, and the final PDF is prepared in Korean.",
     emergency: "Immediate danger? Call 112 or ask a counselor now.",
     step: "Step 2 of 4",
     stepTitle: "Payday details",
@@ -225,8 +225,8 @@ const copy = {
   },
   ko: {
     hero: "지금 어떤 문제가 있나요?",
-    heroTitle: "상담사가 바로 볼 수 있는 접수 자료를 준비하세요.",
-    support: "직장 문제를 정리해 한국어 PDF로 만들 수 있습니다. 계정은 필요하지 않습니다.",
+    heroTitle: "도움이 필요한 문제를 한국어 상담 자료로 준비하세요.",
+    support: "간단한 질문에 답하면 개인정보는 이 기기에만 머물고, 최종 PDF는 한국어로 준비됩니다.",
     emergency: "즉시 위험한가요? 112에 전화하거나 상담사에게 요청하세요.",
     step: "4단계 중 2단계",
     stepTitle: "급여일 정보",
@@ -270,8 +270,8 @@ const copy = {
   },
   vi: {
     hero: "Bạn đang gặp vấn đề gì ngay bây giờ?",
-    heroTitle: "Chuẩn bị hồ sơ để tư vấn viên xem ngay.",
-    support: "Sắp xếp vấn đề nơi làm việc thành PDF tiếng Hàn để NGO xem xét. Không cần tài khoản.",
+    heroTitle: "Chuẩn bị vấn đề của bạn để nhận hỗ trợ bằng tiếng Hàn.",
+    support: "Trả lời một vài câu hỏi rõ ràng. Thông tin riêng tư ở lại trên thiết bị này và PDF cuối cùng được chuẩn bị bằng tiếng Hàn.",
     emergency: "Đang nguy hiểm? Gọi 112 hoặc yêu cầu tư vấn viên ngay.",
     step: "Bước 2 / 4",
     stepTitle: "Thông tin ngày trả lương",
@@ -315,8 +315,8 @@ const copy = {
   },
   th: {
     hero: "ตอนนี้คุณกำลังเจอปัญหาอะไร?",
-    heroTitle: "เตรียมข้อมูลให้ที่ปรึกษาตรวจได้ทันที",
-    support: "จัดระเบียบปัญหาในที่ทำงานเป็น PDF ภาษาเกาหลีสำหรับ NGO โดยไม่ต้องสร้างบัญชี",
+    heroTitle: "เตรียมปัญหาของคุณเพื่อรับความช่วยเหลือเป็นภาษาเกาหลี",
+    support: "ตอบคำถามที่ชัดเจนเพียงไม่กี่ข้อ ข้อมูลส่วนตัวจะอยู่ในอุปกรณ์นี้ และ PDF สุดท้ายจะจัดทำเป็นภาษาเกาหลี",
     emergency: "มีอันตรายทันทีหรือไม่? โทร 112 หรือขอความช่วยเหลือจากที่ปรึกษา",
     step: "ขั้นตอน 2 จาก 4",
     stepTitle: "รายละเอียดวันจ่ายเงิน",
@@ -592,6 +592,44 @@ const situations: Situation[] = [
     },
   },
 ];
+
+const situationSearchTerms: Record<string, string> = {
+  wages: "pay salary money overtime severance missing unpaid wage 임금 월급 돈 체불 초과근무 퇴직금",
+  medical: "injury hurt sick hospital doctor insurance accident emergency 부상 아픔 병원 보험 사고 응급",
+  contract: "visa immigration contract employer change release form 비자 체류 계약 사업장 변경",
+  safety: "danger unsafe machine factory fumes heat cold safety 위험 안전 기계 공장 유해",
+  housing: "home room dormitory eviction rent utilities housing 숙소 집 기숙사 퇴거 월세 공과금",
+};
+
+const triageDiscoveryCopy: Record<
+  LanguageCode,
+  { popular: string; results: string; noResults: string; searchHint: string }
+> = {
+  en: {
+    popular: "Frequently searched",
+    results: "Suggested support",
+    noResults: "No matching situation yet. Try a simpler word such as pay, hospital, visa, safety, or housing.",
+    searchHint: "Describe what happened in a few words",
+  },
+  ko: {
+    popular: "자주 찾는 문제",
+    results: "추천 지원 항목",
+    noResults: "일치하는 문제가 없습니다. 월급, 병원, 비자, 안전, 숙소처럼 간단한 단어로 검색해 보세요.",
+    searchHint: "무슨 일이 있었는지 짧게 검색하세요",
+  },
+  vi: {
+    popular: "Vấn đề thường được tìm",
+    results: "Hỗ trợ được đề xuất",
+    noResults: "Chưa tìm thấy tình huống phù hợp. Hãy thử từ đơn giản như lương, bệnh viện, visa, an toàn hoặc nhà ở.",
+    searchHint: "Mô tả ngắn gọn điều đã xảy ra",
+  },
+  th: {
+    popular: "ปัญหาที่ค้นหาบ่อย",
+    results: "ความช่วยเหลือที่แนะนำ",
+    noResults: "ยังไม่พบสถานการณ์ที่ตรงกัน ลองใช้คำง่าย ๆ เช่น ค่าจ้าง โรงพยาบาล วีซ่า ความปลอดภัย หรือที่พัก",
+    searchHint: "อธิบายสั้น ๆ ว่าเกิดอะไรขึ้น",
+  },
+};
 
 const scenarioQuestions: Record<string, Record<LanguageCode, string[]>> = {
   wages: {
@@ -1201,18 +1239,19 @@ function WorkerSite() {
   const [completedIntake, setCompletedIntake] = useState<CompletedIntake | null>(null);
   const [resetToken, setResetToken] = useState(0);
   const [triageSearch, setTriageSearch] = useState("");
-  const [isTriageExpanded, setIsTriageExpanded] = useState(false);
   const [isLanguageMenuOpen, setIsLanguageMenuOpen] = useState(false);
   const [showLanguageModal, setShowLanguageModal] = useState(
     () => localStorage.getItem("linkup-language-selected") !== "true",
   );
   const text = copy[language];
+  const discoveryText = triageDiscoveryCopy[language];
+  const normalizedTriageSearch = triageSearch.trim().toLowerCase();
   const filteredSituations = situations.filter((situation) => {
-    const searchText = `${situation.label[language]} ${situation.detail[language]} ${situation.label.en} ${situation.detail.en}`.toLowerCase();
-    return searchText.includes(triageSearch.trim().toLowerCase());
+    const searchText = `${situation.label[language]} ${situation.detail[language]} ${situation.label.en} ${situation.detail.en} ${situationSearchTerms[situation.id] ?? ""}`.toLowerCase();
+    return searchText.includes(normalizedTriageSearch);
   });
-  const shownSituations =
-    isTriageExpanded || triageSearch.trim() ? filteredSituations : filteredSituations.slice(0, 3);
+  const suggestedSituations = normalizedTriageSearch ? filteredSituations.slice(0, 3) : [];
+  const popularSituations = situations.slice(0, 3);
   const selectedSituation = useMemo(
     () =>
       situations.find((situation) => situation.id === selectedIssue) ?? situations[0],
@@ -1244,6 +1283,12 @@ function WorkerSite() {
           <img alt="LinkUP" className="brand-logo" src="/linkup-wordmark.png" />
         </a>
         <nav aria-label="Primary navigation">
+          <LanguageSelector
+            isOpen={isLanguageMenuOpen}
+            onSelect={chooseLanguage}
+            onToggle={() => setIsLanguageMenuOpen((current) => !current)}
+            selectedLanguage={language}
+          />
           <a href="#/how-it-works">{text.howThisWorks}</a>
           <a href="#/admin">NGO Admin</a>
         </nav>
@@ -1255,16 +1300,9 @@ function WorkerSite() {
           <h1>{text.heroTitle}</h1>
           <p>{text.support}</p>
           <div className="trust-strip" aria-label="LinkUP privacy and output highlights">
-            <span>No account</span>
-            <span>Private by default</span>
-            <span>Korean PDF output</span>
+            <span>{text.localOnlyLabel}</span>
+            <span>{text.pdfOutputLabel}</span>
           </div>
-          <LanguageSelector
-            isOpen={isLanguageMenuOpen}
-            onSelect={chooseLanguage}
-            onToggle={() => setIsLanguageMenuOpen((current) => !current)}
-            selectedLanguage={language}
-          />
         </div>
 
       </section>
@@ -1273,19 +1311,16 @@ function WorkerSite() {
         <section className="triage-panel-section" aria-label="Triage choices">
           <div className="triage-panel">
             <div className="triage-panel-topbar">
-              <img alt="LinkUP" className="brand-mark" src="/linkup-wordmark.png" />
+              <p className="directory-label">Start here</p>
               <div className="product-status-row" aria-label="Current intake status">
-                <span>
-                  <strong>{text.selectedLabel}</strong>
-                  {selectedSituation.label[language]}
-                </span>
                 <span>{text.pdfOutputLabel}</span>
                 <span>{text.localOnlyLabel}</span>
               </div>
             </div>
             <h2>{text.triagePanelTitle}</h2>
+            <p className="triage-search-hint">{discoveryText.searchHint}</p>
             <label className="triage-search">
-              <Search size={20} />
+              <Search size={25} />
               <input
                 onChange={(event: { currentTarget: HTMLInputElement }) => setTriageSearch(event.currentTarget.value)}
                 placeholder={text.searchPlaceholder}
@@ -1293,45 +1328,73 @@ function WorkerSite() {
                 value={triageSearch}
               />
             </label>
-            <div className="situation-grid">
-              {shownSituations.map(({ detail, icon: Icon, id, label, tone }) => (
-                <button
-                  className={`situation-button ${tone} ${selectedIssue === id ? "selected" : ""}`}
-                  key={id}
-                  onClick={() => {
-                    setSelectedIssue(id);
-                    setIsPdfReady(false);
-                    setCompletedIntake(null);
-                  }}
-                  type="button"
-                >
-                  {selectedIssue === id ? (
-                    <span className="selected-check" aria-hidden="true">
-                      <CheckCircle2 size={17} />
-                    </span>
-                  ) : null}
-                  <span className="situation-mark">
-                    <Icon size={23} />
-                  </span>
-                  <strong>{label[language]}</strong>
-                  <small>{detail[language]}</small>
-                </button>
-              ))}
-            </div>
-            {!triageSearch.trim() && filteredSituations.length > 3 ? (
-              <button
-                className={`expand-situations-button ${isTriageExpanded ? "expanded" : ""}`}
-                onClick={() => setIsTriageExpanded((current) => !current)}
-                type="button"
-              >
-                <span>{isTriageExpanded ? "Show fewer situations" : "Show more situations"}</span>
-                <ChevronDown size={18} />
-              </button>
-            ) : null}
+            {!normalizedTriageSearch ? (
+              <div className="popular-situations">
+                <p>{discoveryText.popular}</p>
+                <div className="popular-situation-list">
+                  {popularSituations.map(({ icon: Icon, id, label }) => (
+                    <button
+                      className={selectedIssue === id ? "selected" : ""}
+                      key={id}
+                      onClick={() => {
+                        setSelectedIssue(id);
+                        setIsPdfReady(false);
+                        setCompletedIntake(null);
+                      }}
+                      type="button"
+                    >
+                      <Icon size={17} />
+                      <span>{label[language]}</span>
+                      {selectedIssue === id ? <CheckCircle2 size={15} /> : null}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            ) : (
+              <div className="triage-recommendations" aria-live="polite">
+                <div className="recommendation-heading">
+                  <p>{discoveryText.results}</p>
+                  <span>{suggestedSituations.length}</span>
+                </div>
+                {suggestedSituations.length ? (
+                  <div className="situation-grid">
+                    {suggestedSituations.map(({ detail, icon: Icon, id, label, tone }, index) => (
+                      <button
+                        className={`situation-button ${tone} ${selectedIssue === id ? "selected" : ""}`}
+                        key={id}
+                        onClick={() => {
+                          setSelectedIssue(id);
+                          setIsPdfReady(false);
+                          setCompletedIntake(null);
+                        }}
+                        type="button"
+                      >
+                        <span className="situation-number">{String(index + 1).padStart(2, "0")}</span>
+                        <span className="situation-mark">
+                          <Icon size={23} />
+                        </span>
+                        <strong>{label[language]}</strong>
+                        <small>{detail[language]}</small>
+                        <span className="situation-row-end" aria-hidden="true">
+                          {selectedIssue === id ? <CheckCircle2 size={18} /> : <ArrowRight size={18} />}
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="triage-no-results">{discoveryText.noResults}</p>
+                )}
+              </div>
+            )}
           </div>
         </section>
 
         <section className="workflow-section" id="intake">
+          <div className="intake-sticky-summary">
+            <strong>{selectedSituation.label[language]}</strong>
+            <span>{text.stepOf(1, 5)}</span>
+            <span>{text.localOnlyLabel}</span>
+          </div>
           <div className="section-heading">
             <p className="eyebrow">{text.intakeEyebrow}</p>
             <h2>{text.intakeHeading}</h2>
