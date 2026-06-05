@@ -37,7 +37,7 @@ type AppProps = {
   useConvex?: boolean;
 };
 
-type LanguageCode = "en" | "ko" | "vi" | "th";
+type LanguageCode = "en" | "ko" | "vi" | "th" | "id" | "fil";
 
 type Situation = {
   id: string;
@@ -52,8 +52,26 @@ type CompletedIntake = {
   attachments: Record<number, UploadedFile[]>;
   issueId: string;
   language: LanguageCode;
+  laborCalculation?: LaborCalculation;
   region: string;
   selectedOptions: Record<number, string[]>;
+};
+
+type LaborCalculation = {
+  averageDailyWage: number;
+  eligible: boolean;
+  endDate: string;
+  estimatedSeverance: number;
+  recentPeriodDays: number;
+  recentWageTotal: string;
+  serviceDays: number;
+  startDate: string;
+};
+
+type LaborCalculatorInputs = {
+  endDate: string;
+  recentWageTotal: string;
+  startDate: string;
 };
 
 type UploadedFile = {
@@ -70,6 +88,23 @@ type QuestionMeta = {
 };
 
 type LocalizedOptions = Partial<Record<LanguageCode, string[]>>;
+
+type WageLawKey =
+  | "no_pay_stub"
+  | "no_written_contract"
+  | "unpaid_annual_leave_allowance"
+  | "unpaid_basic_salary"
+  | "unpaid_dismissal_notice_allowance"
+  | "unpaid_exit_clearance"
+  | "unpaid_overtime_allowance"
+  | "unpaid_severance"
+  | "unpaid_shutdown_allowance"
+  | "unpaid_weekly_holiday_allowance";
+
+type WageLawGuideEntry = {
+  article: string;
+  koreanText: string;
+};
 
 type CountItem = {
   count: number;
@@ -92,6 +127,7 @@ type AdminStats = {
 type Route = "admin" | "home" | "how-it-works";
 
 const ADMIN_CODE = "LINKUP-NGO-2026";
+const WAGE_LAW_OPTION_INDEX = 40;
 const convexSiteUrl = import.meta.env.VITE_CONVEX_SITE_URL as string | undefined;
 const emptyAdminStats: AdminStats = {
   categoryCounts: [],
@@ -163,6 +199,8 @@ const regionGroups = [
 ];
 const languageNames: Record<string, string> = {
   en: "English",
+  fil: "Filipino",
+  id: "Indonesian",
   ko: "Korean",
   th: "Thai",
   vi: "Vietnamese",
@@ -175,6 +213,8 @@ const languages: Array<{ code: LanguageCode; flagSrc: string; label: string; sho
   { code: "ko", flagSrc: "/flags/kr.svg", label: "한국어", shortLabel: "KR" },
   { code: "vi", flagSrc: "/flags/vn.svg", label: "Tiếng Việt", shortLabel: "VI" },
   { code: "th", flagSrc: "/flags/th.svg", label: "ไทย", shortLabel: "TH" },
+  { code: "id", flagSrc: "/flags/id.svg", label: "Bahasa Indonesia", shortLabel: "ID" },
+  { code: "fil", flagSrc: "/flags/ph.svg", label: "Filipino", shortLabel: "PH" },
 ];
 
 const copy = {
@@ -358,6 +398,96 @@ const copy = {
     pdfOutputLabel: "PDF ภาษาเกาหลี",
     selectedLabel: "ปัญหาที่เลือก",
   },
+  id: {
+    hero: "Masalah apa yang sedang Anda hadapi?",
+    heroTitle: "Siapkan situasi Anda untuk dukungan dalam bahasa Korea.",
+    support: "Jawab beberapa pertanyaan sederhana. Detail pribadi tetap di perangkat ini, dan PDF akhir disiapkan dalam bahasa Korea.",
+    emergency: "Dalam bahaya langsung? Hubungi 112 atau minta bantuan konselor sekarang.",
+    step: "Langkah 2 dari 4",
+    stepTitle: "Detail hari gaji",
+    question: "Kapan terakhir kali Anda menerima gaji?",
+    help: "Tidak harus tepat. Pilih jawaban yang paling dekat.",
+    continue: "Lanjutkan dengan aman",
+    intakeEyebrow: "Intake sesuai situasi",
+    intakeHeading: "Pertanyaan sederhana, jawaban siap untuk konselor",
+    stepOf: (step: number, total: number) => `Langkah ${step} dari ${total}`,
+    answerHelp: "Jawab dengan bahasa apa pun. Jawaban singkat atau perkiraan tidak masalah.",
+    regionLabel: "Wilayah tempat kerja",
+    regionHelp: "Ini membantu mengarahkan kasus ke kantor wilayah atau konselor yang tepat.",
+    regionParentPlaceholder: "Pilih provinsi atau wilayah",
+    subregionLabel: "Pilih wilayah rinci (kota/distrik)",
+    subregionPlaceholder: "Pilih wilayah rinci (kota/distrik)",
+    answerLabel: "Jawaban Anda",
+    answerPlaceholder: "Tulis jawaban Anda di sini",
+    answerSaved: "Jawaban untuk pertanyaan ini telah disimpan.",
+    answerPending: "Anda dapat melanjutkan dan memperbaruinya nanti.",
+    back: "Kembali ke pertanyaan sebelumnya",
+    finish: "Selesai dan buat PDF",
+    reviewTitle: "Tinjau jawaban sebelum membuat PDF",
+    reviewButton: "Tinjau jawaban",
+    reviewHelp: "Periksa setiap jawaban. Anda dapat mengubah apa pun sebelum membuat PDF untuk konselor.",
+    editAnswer: "Ubah",
+    createPdf: "Buat PDF untuk konselor",
+    notAnswered: "Belum dijawab",
+    readQuestion: "Bacakan pertanyaan",
+    ttsMissing: "Browser ini belum memiliki suara untuk bahasa ini. Coba Chrome atau Edge dengan suara bahasa terpasang.",
+    ttsPlaying: "Membacakan pertanyaan.",
+    legalNotice:
+      "Pemberitahuan privasi dan hukum: LinkUP tidak mengumpulkan atau menyimpan detail pribadi Anda. Alat ini membantu menyiapkan informasi untuk konselor dan bukan firma hukum, pengacara, atau pengganti nasihat hukum.",
+    pathwayTitle: "Dari kekhawatiran awal hingga dukungan siap konselor",
+    pathwaySteps: ["Pilih masalah", "Jawab dengan aman", "Unduh PDF", "Bagikan dengan konselor"],
+    triagePanelTitle: "Masalah apa yang sedang Anda hadapi?",
+    searchPlaceholder: "Cari berdasarkan masalah, kata kunci, atau gejala",
+    howThisWorks: "Cara kerja",
+    localOnlyLabel: "Disimpan di perangkat",
+    pdfOutputLabel: "PDF bahasa Korea",
+    selectedLabel: "Masalah yang dipilih",
+  },
+  fil: {
+    hero: "Anong problema ang kinakaharap mo ngayon?",
+    heroTitle: "Ihanda ang iyong sitwasyon para sa suporta sa Korean.",
+    support: "Sagutin ang ilang malinaw na tanong. Mananatili sa device na ito ang pribadong detalye, at ihahanda sa Korean ang huling PDF.",
+    emergency: "May agarang panganib? Tumawag sa 112 o humingi agad ng tulong sa counselor.",
+    step: "Hakbang 2 ng 4",
+    stepTitle: "Detalye ng araw ng sahod",
+    question: "Kailan ang huling araw na sumahod ka?",
+    help: "Okay lang kung hindi eksakto. Piliin ang pinakamalapit na sagot.",
+    continue: "Magpatuloy nang ligtas",
+    intakeEyebrow: "Nakaangkop na intake",
+    intakeHeading: "Simpleng tanong, sagot na handa para sa counselor",
+    stepOf: (step: number, total: number) => `Hakbang ${step} ng ${total}`,
+    answerHelp: "Maaari kang sumagot sa anumang wika. Okay lang ang maikli o tinatayang sagot.",
+    regionLabel: "Rehiyon ng trabaho",
+    regionHelp: "Tumutulong ito na maipadala ang kaso sa tamang regional office o counselor.",
+    regionParentPlaceholder: "Piliin ang probinsya o rehiyon",
+    subregionLabel: "Piliin ang detalye ng rehiyon (lungsod/distrito)",
+    subregionPlaceholder: "Piliin ang detalye ng rehiyon (lungsod/distrito)",
+    answerLabel: "Sagot mo",
+    answerPlaceholder: "I-type ang sagot dito",
+    answerSaved: "Nai-save ang sagot para sa tanong na ito.",
+    answerPending: "Maaari kang magpatuloy at baguhin ito mamaya.",
+    back: "Bumalik sa nakaraang tanong",
+    finish: "Tapusin at gumawa ng PDF",
+    reviewTitle: "Suriin ang mga sagot bago gumawa ng PDF",
+    reviewButton: "Suriin ang mga sagot",
+    reviewHelp: "Tingnan ang bawat sagot. Maaari mong baguhin ang kahit ano bago gumawa ng PDF para sa counselor.",
+    editAnswer: "Baguhin",
+    createPdf: "Gumawa ng PDF para sa counselor",
+    notAnswered: "Wala pang sagot",
+    readQuestion: "Basahin nang malakas ang tanong",
+    ttsMissing: "Walang voice para sa wikang ito sa browser. Subukan ang Chrome o Edge na may naka-install na language voices.",
+    ttsPlaying: "Binabasa ang tanong.",
+    legalNotice:
+      "Paunawa sa privacy at legal: Hindi kinokolekta o iniimbak ng LinkUP ang iyong pribadong detalye. Tinutulungan ka ng tool na ito na maghanda ng impormasyon para sa counselor at hindi ito law firm, abogado, o kapalit ng legal advice.",
+    pathwayTitle: "Mula unang alalahanin hanggang suportang handa para sa counselor",
+    pathwaySteps: ["Piliin ang isyu", "Sumagot nang ligtas", "I-download ang PDF", "Ibahagi sa counselor"],
+    triagePanelTitle: "Anong problema ang kinakaharap mo ngayon?",
+    searchPlaceholder: "Maghanap ayon sa isyu, keyword, o sintomas",
+    howThisWorks: "Paano ito gumagana",
+    localOnlyLabel: "Naka-save sa device",
+    pdfOutputLabel: "PDF sa Korean",
+    selectedLabel: "Napiling isyu",
+  },
 };
 
 const howPageCopy: Record<
@@ -372,6 +502,7 @@ const howPageCopy: Record<
     eyebrow: string;
     heroTitle: string;
     heroBody: string;
+    processTitle: string;
     steps: Array<{ body: string; title: string }>;
   }
 > = {
@@ -388,6 +519,7 @@ const howPageCopy: Record<
     heroTitle: "From first concern to counselor-ready support",
     heroBody:
       "LinkUP helps workers describe urgent labor problems in plain language, then turns the intake into a structured Korean PDF for a counselor.",
+    processTitle: "How LinkUP works",
     steps: [
       {
         title: "1. Choose the closest issue",
@@ -420,6 +552,7 @@ const howPageCopy: Record<
     heroTitle: "처음 걱정부터 상담용 자료 준비까지",
     heroBody:
       "LinkUP은 노동자가 긴급한 직장 문제를 쉬운 말로 정리하도록 돕고, 그 내용을 상담사가 볼 수 있는 한국어 PDF로 만듭니다.",
+    processTitle: "LinkUP 이용 절차",
     steps: [
       {
         title: "1. 가장 가까운 문제 선택",
@@ -452,6 +585,7 @@ const howPageCopy: Record<
     heroTitle: "Từ lo lắng ban đầu đến hồ sơ sẵn sàng cho tư vấn viên",
     heroBody:
       "LinkUP giúp người lao động mô tả vấn đề lao động khẩn cấp bằng ngôn ngữ đơn giản, sau đó chuyển nội dung đó thành PDF tiếng Hàn có cấu trúc cho tư vấn viên.",
+    processTitle: "Cách sử dụng LinkUP",
     steps: [
       {
         title: "1. Chọn vấn đề gần nhất",
@@ -484,6 +618,7 @@ const howPageCopy: Record<
     heroTitle: "จากความกังวลแรกสู่เอกสารพร้อมให้ที่ปรึกษาตรวจ",
     heroBody:
       "LinkUP ช่วยให้แรงงานอธิบายปัญหาเร่งด่วนในที่ทำงานด้วยภาษาง่าย ๆ แล้วจัดทำเป็น PDF ภาษาเกาหลีที่มีโครงสร้างสำหรับที่ปรึกษา",
+    processTitle: "ขั้นตอนการใช้ LinkUP",
     steps: [
       {
         title: "1. เลือกปัญหาที่ใกล้เคียงที่สุด",
@@ -503,6 +638,72 @@ const howPageCopy: Record<
       },
     ],
   },
+  id: {
+    ariaPathway: "Alur dukungan LinkUP",
+    ariaSteps: "Langkah penggunaan LinkUP",
+    backToWorker: "Dukungan pekerja",
+    detailTitle: "Intake pekerja tanpa retensi data",
+    detailBodyOne:
+      "Nama pemberi kerja, tanggal, jumlah uang, kontak, dan file hanya disimpan sementara di memori browser untuk membuat PDF. Dashboard NGO hanya dapat menerima statistik anonim menurut wilayah, masalah, dan bahasa.",
+    detailBodyTwo:
+      "Saat PDF diunduh atau tab ditutup, detail intake pribadi dihapus dari status aplikasi.",
+    eyebrow: "Cara kerja",
+    heroTitle: "Dari kekhawatiran pertama hingga materi siap untuk konselor",
+    heroBody:
+      "LinkUP membantu pekerja menjelaskan masalah mendesak dengan bahasa sederhana, lalu mengubah intake menjadi PDF bahasa Korea yang terstruktur untuk konselor.",
+    processTitle: "Cara menggunakan LinkUP",
+    steps: [
+      {
+        title: "1. Pilih masalah terdekat",
+        body: "Pekerja mulai dengan pilihan triase sederhana. Layar pertama menghindari bahasa hukum yang sulit dan memakai pencarian serta kartu situasi yang jelas.",
+      },
+      {
+        title: "2. Jawab dengan aman",
+        body: "Detail pribadi hanya berada di browser saat pekerja menjawab. Wilayah, jenis masalah, dan bahasa digunakan untuk data tren anonim.",
+      },
+      {
+        title: "3. Unduh PDF bahasa Korea",
+        body: "Di akhir, LinkUP memformat jawaban menjadi dokumen Korea siap konselor dengan ringkasan, bagian masalah, bukti, dan halaman lampiran.",
+      },
+      {
+        title: "4. Bagikan dengan konselor tepercaya",
+        body: "Pekerja dapat menyerahkan PDF kepada konselor NGO atau staf. LinkUP adalah alat persiapan intake, bukan firma hukum atau layanan hukum.",
+      },
+    ],
+  },
+  fil: {
+    ariaPathway: "Daloy ng suporta ng LinkUP",
+    ariaSteps: "Mga hakbang sa paggamit ng LinkUP",
+    backToWorker: "Suporta sa worker",
+    detailTitle: "Zero-retention worker intake",
+    detailBodyOne:
+      "Ang pangalan ng employer, petsa, halaga, contact, at files ay pansamantalang nasa browser memory lang para makagawa ng PDF. Anonymous counts lang ayon sa rehiyon, isyu, at wika ang maaaring mapunta sa NGO dashboard.",
+    detailBodyTwo:
+      "Kapag na-download ang PDF o isinara ang tab, mabubura sa app state ang pribadong intake details.",
+    eyebrow: "Paano ito gumagana",
+    heroTitle: "Mula unang alalahanin hanggang handa para sa counselor",
+    heroBody:
+      "Tinutulungan ng LinkUP ang workers na ilarawan ang urgent na problema sa simpleng salita, pagkatapos ay ginagawa itong structured Korean PDF para sa counselor.",
+    processTitle: "Paano gamitin ang LinkUP",
+    steps: [
+      {
+        title: "1. Piliin ang pinakamalapit na isyu",
+        body: "Magsisimula ang worker sa simpleng triage choice. Iniiwasan ng unang screen ang mahirap na legal terms at gumagamit ng malinaw na search at situation cards.",
+      },
+      {
+        title: "2. Sumagot nang ligtas",
+        body: "Mananatili lang sa browser ang personal details habang sumasagot ang worker. Rehiyon, uri ng isyu, at wika lang ang ginagamit para sa anonymous trend data.",
+      },
+      {
+        title: "3. I-download ang Korean PDF",
+        body: "Sa dulo, inaayos ng LinkUP ang mga sagot bilang Korean document na handa para sa counselor, may summary, issue sections, evidence, at attachment pages.",
+      },
+      {
+        title: "4. Ibahagi sa trusted counselor",
+        body: "Maaaring ibigay ng worker ang PDF sa NGO counselor o staff member. Ang LinkUP ay intake preparation tool, hindi law firm o legal service.",
+      },
+    ],
+  },
 };
 
 const situations: Situation[] = [
@@ -515,12 +716,16 @@ const situations: Situation[] = [
       ko: "임금 미지급",
       vi: "Chưa trả lương",
       th: "ไม่ได้รับค่าจ้าง",
+      id: "Gaji Belum Dibayar",
+      fil: "Hindi Nababayarang Sahod",
     },
     detail: {
       en: "Salary, overtime, severance",
       ko: "월급, 초과근무, 퇴직금",
       vi: "Lương, tăng ca, trợ cấp thôi việc",
       th: "เงินเดือน ล่วงเวลา เงินชดเชย",
+      id: "Gaji, lembur, pesangon",
+      fil: "Sahod, overtime, separation pay",
     },
   },
   {
@@ -532,12 +737,16 @@ const situations: Situation[] = [
       ko: "의료 긴급상황",
       vi: "Khẩn cấp y tế",
       th: "เหตุฉุกเฉินทางแพทย์",
+      id: "Darurat Medis",
+      fil: "Medical Emergency",
     },
     detail: {
       en: "Injury, hospital, insurance",
       ko: "부상, 병원, 보험",
       vi: "Chấn thương, bệnh viện, bảo hiểm",
       th: "บาดเจ็บ โรงพยาบาล ประกัน",
+      id: "Cedera, rumah sakit, asuransi",
+      fil: "Pinsala, ospital, insurance",
     },
   },
   {
@@ -549,12 +758,16 @@ const situations: Situation[] = [
       ko: "비자 / 계약 문제",
       vi: "Visa / Hợp đồng",
       th: "วีซ่า / สัญญา",
+      id: "Visa / Kontrak",
+      fil: "Visa / Kontrata",
     },
     detail: {
       en: "E-9, contract, employer change",
       ko: "E-9, 계약서, 사업장 변경",
       vi: "E-9, hợp đồng, đổi nơi làm",
       th: "E-9 สัญญา เปลี่ยนนายจ้าง",
+      id: "E-9, kontrak, pindah kerja",
+      fil: "E-9, kontrata, palit employer",
     },
   },
   {
@@ -566,12 +779,16 @@ const situations: Situation[] = [
       ko: "사업장 안전",
       vi: "An toàn nơi làm việc",
       th: "ความปลอดภัยในงาน",
+      id: "Keselamatan Kerja",
+      fil: "Kaligtasan sa Trabaho",
     },
     detail: {
       en: "Unsafe housing or factory conditions",
       ko: "위험한 숙소 또는 작업환경",
       vi: "Nhà ở hoặc nơi làm không an toàn",
       th: "ที่พักหรือสถานที่ทำงานไม่ปลอดภัย",
+      id: "Tempat tinggal atau pabrik tidak aman",
+      fil: "Hindi ligtas na tirahan o pabrika",
     },
   },
   {
@@ -583,55 +800,356 @@ const situations: Situation[] = [
       ko: "숙소 퇴거 위협",
       vi: "Đe dọa chỗ ở",
       th: "ถูกขู่ให้ออกจากที่พัก",
+      id: "Ancaman Tempat Tinggal",
+      fil: "Banta sa Tirahan",
     },
     detail: {
       en: "Eviction, deductions, pressure",
       ko: "퇴거, 공제, 압박",
       vi: "Đuổi khỏi nhà, khấu trừ, ép buộc",
       th: "ไล่ออก หักเงิน กดดัน",
+      id: "Pengusiran, potongan, tekanan",
+      fil: "Pagpapaalis, bawas, pressure",
     },
   },
 ];
 
 const situationSearchTerms: Record<string, string> = {
-  wages: "pay salary money overtime severance missing unpaid wage 임금 월급 돈 체불 초과근무 퇴직금",
-  medical: "injury hurt sick hospital doctor insurance accident emergency 부상 아픔 병원 보험 사고 응급",
-  contract: "visa immigration contract employer change release form 비자 체류 계약 사업장 변경",
-  safety: "danger unsafe machine factory fumes heat cold safety 위험 안전 기계 공장 유해",
-  housing: "home room dormitory eviction rent utilities housing 숙소 집 기숙사 퇴거 월세 공과금",
+  wages: "pay salary money overtime severance missing unpaid wage gaji upah lembur pesangon sahod sweldo 임금 월급 돈 체불 초과근무 퇴직금",
+  medical: "injury hurt sick hospital doctor insurance accident emergency cedera sakit rumah sakit asuransi pinsala ospital insurance 부상 아픔 병원 보험 사고 응급",
+  contract: "visa immigration contract employer change release form kontrak pindah kerja visa kontrata employer 비자 체류 계약 사업장 변경",
+  safety: "danger unsafe machine factory fumes heat cold safety bahaya mesin pabrik kaligtasan panganib 위험 안전 기계 공장 유해",
+  housing: "home room dormitory eviction rent utilities housing tempat tinggal kos pengusiran tirahan bahay 숙소 집 기숙사 퇴거 월세 공과금",
 };
 
 const triageDiscoveryCopy: Record<
   LanguageCode,
-  { popular: string; results: string; noResults: string; searchHint: string }
+  { popular: string; results: string; noResults: string; searchHint: string; searchExample: string }
 > = {
   en: {
     popular: "Frequently searched",
     results: "Suggested support",
     noResults: "No matching situation yet. Try a simpler word such as pay, hospital, visa, safety, or housing.",
     searchHint: "Describe what happened in a few words",
+    searchExample: "Try short keywords: pay, salary, hospital, injury, visa, contract, safety, housing",
   },
   ko: {
     popular: "자주 찾는 문제",
     results: "추천 지원 항목",
     noResults: "일치하는 문제가 없습니다. 월급, 병원, 비자, 안전, 숙소처럼 간단한 단어로 검색해 보세요.",
     searchHint: "무슨 일이 있었는지 짧게 검색하세요",
+    searchExample: "짧은 단어로 검색해 보세요: 월급, 임금, 병원, 부상, 비자, 계약, 안전, 숙소",
   },
   vi: {
     popular: "Vấn đề thường được tìm",
     results: "Hỗ trợ được đề xuất",
     noResults: "Chưa tìm thấy tình huống phù hợp. Hãy thử từ đơn giản như lương, bệnh viện, visa, an toàn hoặc nhà ở.",
     searchHint: "Mô tả ngắn gọn điều đã xảy ra",
+    searchExample: "Hãy thử từ khóa ngắn: lương, bệnh viện, chấn thương, visa, hợp đồng, an toàn, nhà ở",
   },
   th: {
     popular: "ปัญหาที่ค้นหาบ่อย",
     results: "ความช่วยเหลือที่แนะนำ",
     noResults: "ยังไม่พบสถานการณ์ที่ตรงกัน ลองใช้คำง่าย ๆ เช่น ค่าจ้าง โรงพยาบาล วีซ่า ความปลอดภัย หรือที่พัก",
     searchHint: "อธิบายสั้น ๆ ว่าเกิดอะไรขึ้น",
+    searchExample: "ลองใช้คำสั้น ๆ: ค่าจ้าง, โรงพยาบาล, บาดเจ็บ, วีซ่า, สัญญา, ความปลอดภัย, ที่พัก",
+  },
+  id: {
+    popular: "Sering dicari",
+    results: "Dukungan yang disarankan",
+    noResults: "Belum ada situasi yang cocok. Coba kata sederhana seperti gaji, rumah sakit, visa, keselamatan, atau tempat tinggal.",
+    searchHint: "Jelaskan singkat apa yang terjadi",
+    searchExample: "Coba kata kunci singkat: gaji, rumah sakit, cedera, visa, kontrak, keselamatan, tempat tinggal",
+  },
+  fil: {
+    popular: "Madalas hanapin",
+    results: "Iminungkahing suporta",
+    noResults: "Wala pang tugmang sitwasyon. Subukan ang simpleng salita tulad ng sahod, ospital, visa, kaligtasan, o tirahan.",
+    searchHint: "Ilarawan nang maikli ang nangyari",
+    searchExample: "Subukan ang maiikling keyword: sahod, ospital, pinsala, visa, kontrata, kaligtasan, tirahan",
   },
 };
 
-const scenarioQuestions: Record<string, Record<LanguageCode, string[]>> = {
+const laborCalculatorCopy: Record<
+  LanguageCode,
+  {
+    averageDaily: string;
+    disclaimer: string;
+    eligible: string;
+    endDate: string;
+    estimated: string;
+    ineligible: string;
+    recentWageTotal: string;
+    startDate: string;
+    title: string;
+  }
+> = {
+  en: {
+    averageDaily: "Average daily wage",
+    disclaimer: "Input-based estimate only. A counselor should verify working days, ordinary wage issues, bonuses, and allowances.",
+    eligible: "Estimated severance may apply because the service period is at least 1 year.",
+    endDate: "Last work date",
+    estimated: "Estimated statutory severance",
+    ineligible: "Service period is under 1 year, so statutory severance may not apply.",
+    recentWageTotal: "Total wages from the last 3 months",
+    startDate: "First work date",
+    title: "Optional severance calculator",
+  },
+  ko: {
+    averageDaily: "1일 평균임금",
+    disclaimer: "입력값 기준 예상액입니다. 실제 근무일, 통상임금, 상여금, 수당 포함 여부는 상담사가 확인해야 합니다.",
+    eligible: "재직기간이 1년 이상이므로 퇴직금 검토 대상일 수 있습니다.",
+    endDate: "퇴사일 또는 마지막 근무일",
+    estimated: "법정 퇴직금 예상액",
+    ineligible: "재직기간이 1년 미만이므로 법정 퇴직금 대상이 아닐 수 있습니다.",
+    recentWageTotal: "최근 3개월 임금 총액",
+    startDate: "입사일 또는 첫 근무일",
+    title: "선택 입력: 퇴직금 계산기",
+  },
+  vi: {
+    averageDaily: "Lương bình quân một ngày",
+    disclaimer: "Chỉ là ước tính theo dữ liệu nhập. Tư vấn viên cần kiểm tra ngày làm việc, lương thông thường, thưởng và phụ cấp.",
+    eligible: "Thời gian làm việc từ 1 năm trở lên, có thể cần xem xét trợ cấp thôi việc.",
+    endDate: "Ngày làm việc cuối cùng",
+    estimated: "Trợ cấp thôi việc ước tính",
+    ineligible: "Thời gian làm việc dưới 1 năm, có thể không đủ điều kiện nhận trợ cấp thôi việc theo luật.",
+    recentWageTotal: "Tổng lương 3 tháng gần nhất",
+    startDate: "Ngày bắt đầu làm việc",
+    title: "Tùy chọn: máy tính trợ cấp thôi việc",
+  },
+  th: {
+    averageDaily: "ค่าจ้างเฉลี่ยต่อวัน",
+    disclaimer: "เป็นเพียงการประเมินจากข้อมูลที่กรอก ที่ปรึกษาควรตรวจสอบวันทำงาน ค่าจ้างปกติ โบนัส และเงินเพิ่มต่าง ๆ",
+    eligible: "ระยะเวลาทำงานอย่างน้อย 1 ปี จึงอาจต้องตรวจสอบสิทธิเงินชดเชย/เงินเกษียณ",
+    endDate: "วันทำงานวันสุดท้าย",
+    estimated: "เงินชดเชยตามกฎหมายโดยประมาณ",
+    ineligible: "ระยะเวลาทำงานน้อยกว่า 1 ปี จึงอาจไม่เข้าเงื่อนไขเงินชดเชยตามกฎหมาย",
+    recentWageTotal: "ค่าจ้างรวม 3 เดือนล่าสุด",
+    startDate: "วันเริ่มทำงาน",
+    title: "ตัวเลือก: เครื่องคำนวณเงินชดเชย",
+  },
+  id: {
+    averageDaily: "Upah rata-rata per hari",
+    disclaimer: "Ini hanya estimasi berdasarkan input. Konselor perlu memeriksa hari kerja, upah biasa, bonus, dan tunjangan.",
+    eligible: "Masa kerja minimal 1 tahun, sehingga pesangon dapat ditinjau.",
+    endDate: "Tanggal kerja terakhir",
+    estimated: "Estimasi pesangon menurut hukum",
+    ineligible: "Masa kerja kurang dari 1 tahun, sehingga pesangon menurut hukum mungkin tidak berlaku.",
+    recentWageTotal: "Total upah 3 bulan terakhir",
+    startDate: "Tanggal mulai kerja",
+    title: "Opsional: kalkulator pesangon",
+  },
+  fil: {
+    averageDaily: "Average daily wage",
+    disclaimer: "Estimate lang ito batay sa input. Kailangang i-check ng counselor ang working days, ordinary wage, bonus, at allowances.",
+    eligible: "Hindi bababa sa 1 taon ang serbisyo, kaya maaaring i-review ang severance pay.",
+    endDate: "Huling araw ng trabaho",
+    estimated: "Estimated statutory severance",
+    ineligible: "Mas mababa sa 1 taon ang serbisyo, kaya maaaring hindi sakop ng statutory severance.",
+    recentWageTotal: "Kabuuang sahod sa huling 3 buwan",
+    startDate: "Unang araw ng trabaho",
+    title: "Optional: severance calculator",
+  },
+};
+
+const wageLawMatrix: Record<WageLawKey, WageLawGuideEntry> = {
+  no_pay_stub: {
+    article: "근로기준법 제48조 (임금대장 및 임금명세서)",
+    koreanText:
+      "임금을 지급할 때 계산법과 공제 내역이 적힌 서면 임금명세서를 교부하지 않아, 정확한 임금 산정 내용을 확인하기 어렵습니다.",
+  },
+  no_written_contract: {
+    article: "근로기준법 제17조 (근로조건의 명시)",
+    koreanText:
+      "고용주가 근로조건이 명시된 서면 근로계약서를 작성하여 근로자에게 교부하지 않았을 가능성이 있습니다.",
+  },
+  unpaid_annual_leave_allowance: {
+    article: "근로기준법 제60조 (연차 유급휴가)",
+    koreanText:
+      "법정 연차 유급휴가를 사용하지 못하고 근로했음에도 연차휴가미사용수당이 정산되지 않았을 가능성이 있습니다. 상시 5인 이상 사업장 여부를 확인해야 합니다.",
+  },
+  unpaid_basic_salary: {
+    article: "근로기준법 제43조 (임금 지급)",
+    koreanText:
+      "매월 1회 이상 정해진 기일에 임금 전액이 지급되어야 하나, 정당한 사유 없이 기본 급여가 체불되었을 가능성이 있습니다.",
+  },
+  unpaid_dismissal_notice_allowance: {
+    article: "근로기준법 제26조 (해고의 예고)",
+    koreanText:
+      "고용주가 30일 전에 해고 예고를 하지 않고 즉시 해고하였으나, 30일분 이상의 통상임금에 해당하는 해고예고수당을 지급하지 않았을 가능성이 있습니다.",
+  },
+  unpaid_exit_clearance: {
+    article: "근로기준법 제36조 (금품 청산)",
+    koreanText:
+      "근로자가 퇴직한 날로부터 14일 이내에 임금, 보상금, 퇴직금 등 일체의 금품이 지급 및 청산되지 않았을 가능성이 있습니다.",
+  },
+  unpaid_overtime_allowance: {
+    article: "근로기준법 제56조 (연장·야간 및 휴일 근로)",
+    koreanText:
+      "법정 근로시간을 초과한 연장, 야간(22시~06시) 또는 휴일 근로에 대한 가산수당이 지급되지 않았을 가능성이 있습니다. 상시 5인 이상 사업장 여부를 확인해야 합니다.",
+  },
+  unpaid_severance: {
+    article: "근로자퇴직급여 보장법 제9조 (퇴직금의 지급)",
+    koreanText:
+      "1년 이상 계속 근로하고 주 평균 소정근로시간이 15시간 이상인 경우, 퇴직 후 법정 퇴직금이 지급되지 않았을 가능성이 있습니다.",
+  },
+  unpaid_shutdown_allowance: {
+    article: "근로기준법 제46조 (휴업수당)",
+    koreanText:
+      "사용자의 귀책사유로 사업장이 휴업하였으나, 휴업기간 동안 평균임금의 70% 이상의 휴업수당이 지급되지 않았을 가능성이 있습니다. 상시 5인 이상 사업장 여부를 확인해야 합니다.",
+  },
+  unpaid_weekly_holiday_allowance: {
+    article: "근로기준법 제55조 (휴일) 및 동법 시행령 제30조",
+    koreanText:
+      "주 15시간 이상 근무하고 소정근로일을 개근하였으나, 유급휴일에 대한 주휴수당이 임금에 포함되지 않았을 가능성이 있습니다.",
+  },
+};
+
+const wageLawOptionKeys: WageLawKey[] = [
+  "unpaid_basic_salary",
+  "unpaid_exit_clearance",
+  "unpaid_severance",
+  "unpaid_weekly_holiday_allowance",
+  "unpaid_overtime_allowance",
+  "unpaid_dismissal_notice_allowance",
+  "unpaid_shutdown_allowance",
+  "unpaid_annual_leave_allowance",
+  "no_pay_stub",
+];
+
+const wageLawOptionGroups: Array<{ key: string; options: WageLawKey[]; title: Record<LanguageCode, string> }> = [
+  {
+    key: "pay",
+    options: [
+      "unpaid_basic_salary",
+      "unpaid_weekly_holiday_allowance",
+      "unpaid_overtime_allowance",
+      "unpaid_annual_leave_allowance",
+    ],
+    title: {
+      en: "Wages and allowances",
+      fil: "Sahod at allowances",
+      id: "Gaji dan tunjangan",
+      ko: "임금·수당",
+      th: "ค่าจ้างและเงินเพิ่ม",
+      vi: "Lương và phụ cấp",
+    },
+  },
+  {
+    key: "exit",
+    options: [
+      "unpaid_exit_clearance",
+      "unpaid_severance",
+      "unpaid_dismissal_notice_allowance",
+      "unpaid_shutdown_allowance",
+    ],
+    title: {
+      en: "Leaving, dismissal, or shutdown",
+      fil: "Pag-alis, dismissal, o shutdown",
+      id: "Berhenti, PHK, atau penghentian kerja",
+      ko: "퇴사·해고·휴업",
+      th: "ออกจากงาน เลิกจ้าง หรือหยุดงาน",
+      vi: "Nghỉ việc, sa thải hoặc ngừng việc",
+    },
+  },
+  {
+    key: "documents",
+    options: ["no_written_contract", "no_pay_stub"],
+    title: {
+      en: "Documents",
+      fil: "Dokumento",
+      id: "Dokumen",
+      ko: "계약·서류",
+      th: "เอกสาร",
+      vi: "Giấy tờ",
+    },
+  },
+];
+
+const wageLawOptionLabels: Record<WageLawKey, Record<LanguageCode, string>> = {
+  no_pay_stub: {
+    en: "I did not receive a pay stub",
+    fil: "Wala akong natanggap na pay stub",
+    id: "Saya tidak menerima slip gaji",
+    ko: "임금명세서를 받지 못했어요",
+    th: "ไม่ได้รับสลิปเงินเดือน",
+    vi: "Tôi không nhận được phiếu lương",
+  },
+  no_written_contract: {
+    en: "No written labor contract",
+    fil: "Walang nakasulat na kontrata sa trabaho",
+    id: "Tidak ada kontrak kerja tertulis",
+    ko: "근로계약서를 받지 못했어요",
+    th: "ไม่มีสัญญาจ้างเป็นลายลักษณ์อักษร",
+    vi: "Không có hợp đồng lao động bằng văn bản",
+  },
+  unpaid_annual_leave_allowance: {
+    en: "Unused annual leave was not paid",
+    fil: "Hindi binayaran ang hindi nagamit na annual leave",
+    id: "Cuti tahunan yang tidak dipakai belum dibayar",
+    ko: "연차수당을 받지 못했어요",
+    th: "ไม่ได้รับค่าชดเชยวันลาประจำปีที่ไม่ได้ใช้",
+    vi: "Chưa được trả tiền phép năm chưa dùng",
+  },
+  unpaid_basic_salary: {
+    en: "Regular salary was not paid",
+    fil: "Hindi nabayaran ang regular na sahod",
+    id: "Gaji pokok belum dibayar",
+    ko: "기본 월급을 받지 못했어요",
+    th: "ไม่ได้รับเงินเดือนปกติ",
+    vi: "Chưa được trả lương cơ bản",
+  },
+  unpaid_dismissal_notice_allowance: {
+    en: "I was suddenly dismissed without notice pay",
+    fil: "Bigla akong tinanggal at walang notice pay",
+    id: "Saya diberhentikan mendadak tanpa uang pemberitahuan",
+    ko: "갑자기 해고됐고 해고예고수당을 받지 못했어요",
+    th: "ถูกเลิกจ้างกะทันหันและไม่ได้รับค่าบอกกล่าว",
+    vi: "Bị sa thải đột ngột và chưa nhận tiền báo trước",
+  },
+  unpaid_exit_clearance: {
+    en: "I left the job, but final wages were not settled",
+    fil: "Umalis na ako pero hindi pa nabayaran ang huling sahod",
+    id: "Saya sudah berhenti tetapi gaji akhir belum diselesaikan",
+    ko: "퇴사 후 14일이 지났는데 돈을 못 받았어요",
+    th: "ออกจากงานแล้วแต่ยังไม่ได้รับเงินงวดสุดท้าย",
+    vi: "Đã nghỉ việc nhưng chưa được thanh toán lương cuối",
+  },
+  unpaid_overtime_allowance: {
+    en: "Overtime, night, or holiday work was not paid",
+    fil: "Hindi nabayaran ang overtime, gabi, o holiday work",
+    id: "Lembur, kerja malam, atau hari libur belum dibayar",
+    ko: "연장·야간·휴일수당을 받지 못했어요",
+    th: "ไม่ได้รับค่าล่วงเวลา กลางคืน หรือวันหยุด",
+    vi: "Chưa được trả tiền tăng ca, ca đêm hoặc ngày nghỉ",
+  },
+  unpaid_severance: {
+    en: "Severance pay was not paid",
+    fil: "Hindi nabayaran ang severance pay",
+    id: "Pesangon belum dibayar",
+    ko: "퇴직금을 받지 못했어요",
+    th: "ไม่ได้รับเงินชดเชย/เงินเกษียณ",
+    vi: "Chưa được trả trợ cấp thôi việc",
+  },
+  unpaid_shutdown_allowance: {
+    en: "The workplace stopped work, but I was not paid shutdown allowance",
+    fil: "Pinahinto ang trabaho pero walang shutdown allowance",
+    id: "Tempat kerja berhenti beroperasi tetapi tunjangan libur kerja belum dibayar",
+    ko: "회사 사정으로 쉬었는데 휴업수당을 받지 못했어요",
+    th: "ที่ทำงานหยุดงานแต่ไม่ได้รับค่าจ้างช่วงหยุดงาน",
+    vi: "Công ty cho nghỉ việc tạm thời nhưng chưa trả trợ cấp ngừng việc",
+  },
+  unpaid_weekly_holiday_allowance: {
+    en: "Weekly holiday allowance was not paid",
+    fil: "Hindi nabayaran ang weekly holiday allowance",
+    id: "Tunjangan hari libur mingguan belum dibayar",
+    ko: "주휴수당을 받지 못했어요",
+    th: "ไม่ได้รับค่าจ้างวันหยุดประจำสัปดาห์",
+    vi: "Chưa được trả phụ cấp ngày nghỉ hằng tuần",
+  },
+};
+
+const scenarioQuestions: Record<string, Partial<Record<LanguageCode, string[]>>> = {
   wages: {
     en: [
       "What is the official name of your workplace or your employer's name?",
@@ -764,7 +1282,7 @@ const scenarioQuestions: Record<string, Record<LanguageCode, string[]>> = {
   },
 };
 
-const unpaidWagesPetitionQuestions: Record<LanguageCode, string[]> = {
+const unpaidWagesPetitionQuestions: Partial<Record<LanguageCode, string[]>> = {
   en: [
     "Worker details: please enter your name, visa type, and contact number.",
     "Workplace details: please enter the company/workplace name and your boss or employer's name.",
@@ -1234,7 +1752,7 @@ function getRouteFromHash(): Route {
 
 function WorkerSite() {
   const [language, setLanguage] = useState<LanguageCode>(() => getSavedLanguage());
-  const [selectedIssue, setSelectedIssue] = useState("wages");
+  const [selectedIssue, setSelectedIssue] = useState<string | null>(null);
   const [isPdfReady, setIsPdfReady] = useState(false);
   const [completedIntake, setCompletedIntake] = useState<CompletedIntake | null>(null);
   const [resetToken, setResetToken] = useState(0);
@@ -1253,8 +1771,7 @@ function WorkerSite() {
   const suggestedSituations = normalizedTriageSearch ? filteredSituations.slice(0, 3) : [];
   const popularSituations = situations.slice(0, 3);
   const selectedSituation = useMemo(
-    () =>
-      situations.find((situation) => situation.id === selectedIssue) ?? situations[0],
+    () => situations.find((situation) => situation.id === selectedIssue) ?? null,
     [selectedIssue],
   );
 
@@ -1271,6 +1788,15 @@ function WorkerSite() {
     localStorage.setItem("linkup-language-selected", "true");
     setShowLanguageModal(false);
     setIsLanguageMenuOpen(false);
+  };
+
+  const chooseIssue = (issueId: string) => {
+    setSelectedIssue(issueId);
+    setIsPdfReady(false);
+    setCompletedIntake(null);
+    window.setTimeout(() => {
+      document.getElementById("intake")?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 100);
   };
 
   return (
@@ -1290,7 +1816,7 @@ function WorkerSite() {
             selectedLanguage={language}
           />
           <a href="#/how-it-works">{text.howThisWorks}</a>
-          <a href="#/admin">NGO Admin</a>
+          <a href="#/admin">Admin</a>
         </nav>
       </header>
 
@@ -1310,13 +1836,6 @@ function WorkerSite() {
       <section className="product-workspace" aria-label="LinkUP intake workspace">
         <section className="triage-panel-section" aria-label="Triage choices">
           <div className="triage-panel">
-            <div className="triage-panel-topbar">
-              <p className="directory-label">Start here</p>
-              <div className="product-status-row" aria-label="Current intake status">
-                <span>{text.pdfOutputLabel}</span>
-                <span>{text.localOnlyLabel}</span>
-              </div>
-            </div>
             <h2>{text.triagePanelTitle}</h2>
             <p className="triage-search-hint">{discoveryText.searchHint}</p>
             <label className="triage-search">
@@ -1328,6 +1847,7 @@ function WorkerSite() {
                 value={triageSearch}
               />
             </label>
+            <p className="triage-search-example">{discoveryText.searchExample}</p>
             {!normalizedTriageSearch ? (
               <div className="popular-situations">
                 <p>{discoveryText.popular}</p>
@@ -1336,11 +1856,7 @@ function WorkerSite() {
                     <button
                       className={selectedIssue === id ? "selected" : ""}
                       key={id}
-                      onClick={() => {
-                        setSelectedIssue(id);
-                        setIsPdfReady(false);
-                        setCompletedIntake(null);
-                      }}
+                      onClick={() => chooseIssue(id)}
                       type="button"
                     >
                       <Icon size={17} />
@@ -1362,11 +1878,7 @@ function WorkerSite() {
                       <button
                         className={`situation-button ${tone} ${selectedIssue === id ? "selected" : ""}`}
                         key={id}
-                        onClick={() => {
-                          setSelectedIssue(id);
-                          setIsPdfReady(false);
-                          setCompletedIntake(null);
-                        }}
+                        onClick={() => chooseIssue(id)}
                         type="button"
                       >
                         <span className="situation-number">{String(index + 1).padStart(2, "0")}</span>
@@ -1389,10 +1901,11 @@ function WorkerSite() {
           </div>
         </section>
 
-        <section className="workflow-section" id="intake">
+        {selectedSituation ? (
+        <section className="workflow-section workflow-section-revealed" id="intake">
           <div className="intake-sticky-summary">
             <strong>{selectedSituation.label[language]}</strong>
-            <span>{text.stepOf(1, 5)}</span>
+            <span>{text.stepOf(1, selectedSituation.id === "wages" ? 7 : 5)}</span>
             <span>{text.localOnlyLabel}</span>
           </div>
           <div className="section-heading">
@@ -1425,6 +1938,7 @@ function WorkerSite() {
             ) : null}
           </div>
         </section>
+        ) : null}
       </section>
       <section className="worker-legal-notice" aria-label="Privacy and legal notice">
         <p>{text.legalNotice}</p>
@@ -1435,7 +1949,12 @@ function WorkerSite() {
 
 function getSavedLanguage(): LanguageCode {
   const savedLanguage = localStorage.getItem("linkup-language");
-  return savedLanguage === "en" || savedLanguage === "ko" || savedLanguage === "vi" || savedLanguage === "th"
+  return savedLanguage === "en" ||
+    savedLanguage === "ko" ||
+    savedLanguage === "vi" ||
+    savedLanguage === "th" ||
+    savedLanguage === "id" ||
+    savedLanguage === "fil"
     ? savedLanguage
     : "en";
 }
@@ -1523,19 +2042,10 @@ function HowItWorksPage() {
   const selectedLanguage = getSavedLanguage();
   const text = copy[selectedLanguage];
   const pageText = howPageCopy[selectedLanguage];
-  const [pathwayStep, setPathwayStep] = useState(0);
   const steps = pageText.steps.map((step, index) => ({
     ...step,
     icon: [Globe2, CheckCircle2, Download, MapPinned][index] ?? CheckCircle2,
   }));
-
-  useEffect(() => {
-    const timer = window.setInterval(() => {
-      setPathwayStep((current) => (current + 1) % text.pathwaySteps.length);
-    }, 3000);
-
-    return () => window.clearInterval(timer);
-  }, [text.pathwaySteps.length]);
 
   return (
     <main className="site-shell how-page" lang={selectedLanguage}>
@@ -1545,76 +2055,62 @@ function HowItWorksPage() {
         </a>
         <nav aria-label="Primary navigation">
           <a href="#/">{pageText.backToWorker}</a>
-          <a href="#/admin">NGO Admin</a>
+          <a href="#/admin">Admin</a>
         </nav>
       </header>
 
       <section className="how-hero" aria-labelledby="how-title">
-        <p className="eyebrow">{pageText.eyebrow}</p>
-        <h1 id="how-title">{pageText.heroTitle}</h1>
-        <p>{pageText.heroBody}</p>
-      </section>
-
-      <section className="how-pathway-section" aria-label={pageText.ariaPathway}>
-        <div className="support-pathway">
-          <div className="pathway-header">
-            <strong>{text.pathwayTitle}</strong>
-          </div>
-          <div className="pathway-carousel" aria-live="polite" aria-label={text.pathwayTitle}>
-            {text.pathwaySteps.map((step, index) => {
-              const StepIcon = [Globe2, CheckCircle2, Download, MapPinned][index] ?? CheckCircle2;
-              return (
-                <article
-                  className={`pathway-step ${pathwayStep === index ? "active" : ""}`}
-                  key={step}
-                  aria-hidden={pathwayStep !== index}
-                >
-                  <span className="pathway-number">{index + 1}</span>
-                  <span className="pathway-icon">
-                    <StepIcon size={28} />
-                  </span>
-                  <span>{step}</span>
-                </article>
-              );
-            })}
-            <div className="pathway-controls" aria-label="Choose support step">
-              {text.pathwaySteps.map((step, index) => (
-                <button
-                  className={pathwayStep === index ? "active" : ""}
-                  key={step}
-                  onClick={() => setPathwayStep(index)}
-                  type="button"
-                  aria-label={step}
-                >
-                  <span>{index + 1}</span>
-                </button>
-              ))}
-            </div>
-          </div>
-          <div className="pathway-note">
-            <CheckCircle2 size={18} />
-            <span>{text.legalNotice}</span>
+        <div className="how-hero-copy">
+          <p className="eyebrow">{pageText.eyebrow}</p>
+          <h1 id="how-title">{pageText.heroTitle}</h1>
+          <p>{pageText.heroBody}</p>
+          <div className="how-hero-trust" aria-label="LinkUP privacy and output highlights">
+            <span>{text.localOnlyLabel}</span>
+            <span>{text.pdfOutputLabel}</span>
           </div>
         </div>
       </section>
 
+      <section className="how-process-intro" aria-label={pageText.ariaPathway}>
+        <div>
+          <p className="directory-label">{pageText.eyebrow}</p>
+          <h2>{pageText.processTitle}</h2>
+        </div>
+        <p>{pageText.detailBodyOne}</p>
+      </section>
+
       <section className="how-card-grid" aria-label={pageText.ariaSteps}>
-        {steps.map(({ body, icon: Icon, title }) => (
+        {steps.map(({ body, icon: Icon, title }, index) => (
           <article className="how-step-card" key={title}>
-            <span>
+            <span className="how-step-number">{String(index + 1).padStart(2, "0")}</span>
+            <span className="how-step-icon">
               <Icon size={26} />
             </span>
-            <h2>{title}</h2>
-            <p>{body}</p>
+            <div>
+              <h2>{title}</h2>
+              <p>{body}</p>
+            </div>
+            <ArrowRight aria-hidden="true" className="how-step-arrow" size={20} />
           </article>
         ))}
       </section>
 
       <section className="how-detail-panel" aria-label={pageText.detailTitle}>
-        <h2>{pageText.detailTitle}</h2>
-        <p>{pageText.detailBodyOne}</p>
-        <p>{pageText.detailBodyTwo}</p>
+        <span className="how-detail-icon">
+          <LockKeyhole size={28} />
+        </span>
+        <div>
+          <p className="directory-label">Privacy by design</p>
+          <h2>{pageText.detailTitle}</h2>
+          <p>{pageText.detailBodyOne}</p>
+          <p>{pageText.detailBodyTwo}</p>
+        </div>
       </section>
+
+      <footer className="how-footer">
+        <p>{text.legalNotice}</p>
+        <a href="#/">{pageText.backToWorker}<ArrowRight size={17} /></a>
+      </footer>
     </main>
   );
 }
@@ -1638,7 +2134,7 @@ function IntakeCard({
       ? unpaidWagesPetitionQuestions
       : scenarioQuestions[selectedSituation.id] ?? scenarioQuestions.wages;
   const metadata = questionMeta[selectedSituation.id] ?? questionMeta.wages;
-  const baseQuestions = scenarioQuestionSet[language] ?? scenarioQuestionSet.en;
+  const baseQuestions = scenarioQuestionSet[language] ?? scenarioQuestionSet.en ?? scenarioQuestions.wages.en ?? [];
   const questions = [text.regionLabel, ...baseQuestions];
   const [questionIndex, setQuestionIndex] = useState(0);
   const [answers, setAnswers] = useState<string[]>(() => Array(baseQuestions.length).fill(""));
@@ -1648,18 +2144,46 @@ function IntakeCard({
   const [region, setRegion] = useState("");
   const [subregion, setSubregion] = useState("");
   const [ttsStatus, setTtsStatus] = useState("");
+  const [laborInputs, setLaborInputs] = useState<LaborCalculatorInputs>({
+    endDate: "",
+    recentWageTotal: "",
+    startDate: "",
+  });
   const answerIndex = questionIndex - 1;
+  const baseStepCount = questions.length;
+  const wageUtilityStepCount = selectedSituation.id === "wages" ? 2 : 0;
+  const totalStepCount = baseStepCount + wageUtilityStepCount;
+  const isWageLawStep = selectedSituation.id === "wages" && questionIndex === baseStepCount;
+  const isWageCalculatorStep = selectedSituation.id === "wages" && questionIndex === baseStepCount + 1;
+  const isUtilityStep = isWageLawStep || isWageCalculatorStep;
   const isRegionStep = questionIndex === 0;
-  const currentAnswer = isRegionStep ? "" : answers[answerIndex] ?? "";
-  const currentSelectedOptions = isRegionStep ? [] : selectedOptions[answerIndex] ?? [];
-  const currentMeta = isRegionStep ? undefined : metadata[answerIndex];
-  const currentOptions = isRegionStep
+  const questionTitle = isWageLawStep
+    ? getWageLawMapperCopy(language).title
+    : isWageCalculatorStep
+      ? laborCalculatorCopy[language].title
+      : questions[questionIndex];
+  const currentAnswer = isRegionStep || isUtilityStep ? "" : answers[answerIndex] ?? "";
+  const currentSelectedOptions = isRegionStep || isUtilityStep ? [] : selectedOptions[answerIndex] ?? [];
+  const currentMeta = isRegionStep || isUtilityStep ? undefined : metadata[answerIndex];
+  const currentOptions = isRegionStep || isUtilityStep
     ? []
     : getQuestionOptions(selectedSituation.id, answerIndex, language, currentMeta);
-  const currentFiles = isRegionStep ? [] : attachments[answerIndex] ?? [];
+  const currentFiles = isRegionStep || isUtilityStep ? [] : attachments[answerIndex] ?? [];
   const selectedRegionGroup = regionGroups.find((item) => item.label === region);
   const completedRegion = region ? (subregion ? `${region} ${subregion}` : region) : "지역 미선택";
   const displayRegionsInEnglish = language !== "ko";
+  const laborCalculation =
+    selectedSituation.id === "wages"
+      ? calculateLaborSeverance(laborInputs.startDate, laborInputs.endDate, laborInputs.recentWageTotal)
+      : null;
+  const showLaborCalculator = isWageCalculatorStep;
+  const showWageLawMapper = isWageLawStep;
+  const selectedWageLawOptions = selectedOptions[WAGE_LAW_OPTION_INDEX] ?? [];
+  const utilityStepComplete = isWageLawStep
+    ? selectedWageLawOptions.length > 0
+    : isWageCalculatorStep
+      ? Boolean(laborCalculation)
+      : false;
 
   useEffect(() => {
     setQuestionIndex(0);
@@ -1670,6 +2194,11 @@ function IntakeCard({
     setRegion("");
     setSubregion("");
     setTtsStatus("");
+    setLaborInputs({
+      endDate: "",
+      recentWageTotal: "",
+      startDate: "",
+    });
     onPdfReset();
   }, [selectedSituation, resetToken]);
 
@@ -1678,7 +2207,7 @@ function IntakeCard({
   }, [language, questionIndex]);
 
   const continueToOutput = () => {
-    if (questionIndex < questions.length - 1) {
+    if (questionIndex < totalStepCount - 1) {
       setQuestionIndex((current) => current + 1);
       onPdfReset();
       return;
@@ -1687,11 +2216,12 @@ function IntakeCard({
   };
 
   const createPdfFromReview = () => {
-    const completed = {
+    const completed: CompletedIntake = {
       answers,
       attachments,
       issueId: selectedSituation.id,
       language,
+      laborCalculation: laborCalculation ?? undefined,
       region: completedRegion,
       selectedOptions,
     };
@@ -1715,6 +2245,17 @@ function IntakeCard({
     setSelectedOptions((current) => ({
       ...current,
       [answerIndex]: nextSelected,
+    }));
+    onPdfReset();
+  };
+
+  const toggleWageLawOption = (option: string) => {
+    const nextSelected = selectedWageLawOptions.includes(option)
+      ? selectedWageLawOptions.filter((item) => item !== option)
+      : [...selectedWageLawOptions, option];
+    setSelectedOptions((current) => ({
+      ...current,
+      [WAGE_LAW_OPTION_INDEX]: nextSelected,
     }));
     onPdfReset();
   };
@@ -1749,12 +2290,12 @@ function IntakeCard({
   return (
     <section className="intake-card">
       <div className="progress-header">
-        <span>{isReviewing ? text.reviewTitle : text.stepOf(questionIndex + 1, questions.length)}</span>
+        <span>{isReviewing ? text.reviewTitle : text.stepOf(questionIndex + 1, totalStepCount)}</span>
         <strong>{selectedSituation.label[language]}</strong>
         <div className="progress-track" aria-hidden="true">
           <span
             style={{
-              "--progress": `${isReviewing ? 100 : ((questionIndex + 1) / questions.length) * 100}%`,
+              "--progress": `${isReviewing ? 100 : ((questionIndex + 1) / totalStepCount) * 100}%`,
             } as CSSProperties}
           />
         </div>
@@ -1771,7 +2312,7 @@ function IntakeCard({
             {baseQuestions.map((question, index) => (
               <article className="review-item" key={question}>
                 <div>
-                  <span>{text.stepOf(index + 2, questions.length)}</span>
+                  <span>{text.stepOf(index + 2, totalStepCount)}</span>
                   <h4>{question}</h4>
                   <p>{answers[index]?.trim() || text.notAnswered}</p>
                   {selectedOptions[index]?.length ? (
@@ -1799,11 +2340,25 @@ function IntakeCard({
               </article>
             ))}
           </div>
+          {laborCalculation ? (
+            <div className="review-calculation" aria-label="Estimated severance summary">
+              <strong>{laborCalculatorCopy[language].estimated}</strong>
+              <span>{formatWon(laborCalculation.estimatedSeverance)}</span>
+              <small>{laborCalculatorCopy[language].disclaimer}</small>
+            </div>
+          ) : null}
+          {selectedWageLawOptions.length ? (
+            <div className="review-calculation" aria-label="Mapped wage law guide">
+              <strong>{getWageLawMapperCopy(language).reviewTitle}</strong>
+              <span>{selectedWageLawOptions.length}</span>
+              <small>{selectedWageLawOptions.join(", ")}</small>
+            </div>
+          ) : null}
           <div className="wizard-actions">
             <button
               className="secondary-action"
               onClick={() => {
-                setQuestionIndex(questions.length - 1);
+                setQuestionIndex(totalStepCount - 1);
                 setIsReviewing(false);
                 onPdfReset();
               }}
@@ -1811,7 +2366,7 @@ function IntakeCard({
             >
               {text.back}
             </button>
-            <button className="primary-action" onClick={createPdfFromReview} type="button">
+            <button className="primary-action mobile-sticky-action" onClick={createPdfFromReview} type="button">
               {text.createPdf}
               <ArrowRight size={18} />
             </button>
@@ -1822,11 +2377,11 @@ function IntakeCard({
       <div className="question-card" aria-labelledby="payday-question">
         <BriefcaseBusiness size={24} />
         <span className="issue-context">{selectedSituation.label[language]}</span>
-        <h3 id="payday-question">{questions[questionIndex]}</h3>
+        <h3 id="payday-question">{questionTitle}</h3>
         <button
           className="tts-button"
           onClick={() => {
-            void speakQuestion(questions[questionIndex], language).then((result) => {
+            void speakQuestion(questionTitle, language).then((result) => {
               setTtsStatus(result === "playing" ? text.ttsPlaying : text.ttsMissing);
             });
           }}
@@ -1855,76 +2410,96 @@ function IntakeCard({
           ))}
         </div>
       ) : null}
-      <div className="field-stack">
-        {isRegionStep ? (
-          <>
-            <label className="input-label">
-              <span>{text.regionLabel}</span>
-              <select
-                onChange={(event: { currentTarget: HTMLSelectElement }) => {
-                  setRegion(event.currentTarget.value);
-                  setSubregion("");
-                  onPdfReset();
-                }}
-                value={region}
-              >
-                <option value="">{text.regionParentPlaceholder}</option>
-                {regionGroups.map((item) => (
-                  <option key={item.label} value={item.label}>
-                    {displayRegionsInEnglish ? item.labelEn : item.label}
-                  </option>
-                ))}
-              </select>
-            </label>
-            {selectedRegionGroup ? (
-              <label className="input-label subregion-field">
-                <span>{text.subregionLabel}</span>
+      {!isUtilityStep ? (
+        <div className="field-stack">
+          {isRegionStep ? (
+            <>
+              <label className="input-label">
+                <span>{text.regionLabel}</span>
                 <select
                   onChange={(event: { currentTarget: HTMLSelectElement }) => {
-                    setSubregion(event.currentTarget.value);
+                    setRegion(event.currentTarget.value);
+                    setSubregion("");
                     onPdfReset();
                   }}
-                  value={subregion}
+                  value={region}
                 >
-                  <option value="">{text.subregionPlaceholder}</option>
-                  {selectedRegionGroup.cities.map((city, index) => (
-                    <option key={city} value={city}>
-                      {displayRegionsInEnglish ? selectedRegionGroup.citiesEn[index] ?? city : city}
+                  <option value="">{text.regionParentPlaceholder}</option>
+                  {regionGroups.map((item) => (
+                    <option key={item.label} value={item.label}>
+                      {displayRegionsInEnglish ? item.labelEn : item.label}
                     </option>
                   ))}
                 </select>
               </label>
-            ) : null}
-          </>
-        ) : (
-          <label className="input-label">
-            <span>{text.answerLabel}</span>
-            <textarea
-              onChange={(event: { currentTarget: HTMLTextAreaElement }) =>
-                updateAnswer(event.currentTarget.value)
-              }
-              placeholder={text.answerPlaceholder}
-              value={currentAnswer}
-            />
-          </label>
-        )}
-        {currentMeta?.allowUpload ? (
-          <label className="input-label upload-label">
-            <span>증거 파일 업로드</span>
-            <input
-              accept="image/*,.pdf"
-              multiple
-              onChange={(event: { currentTarget: HTMLInputElement }) => updateFiles(event.currentTarget.files)}
-              type="file"
-            />
-            {currentFiles.length ? (
-              <small>{currentFiles.map((file) => file.name).join(", ")}</small>
-            ) : (
-              <small>사진, PDF 등 상담사가 확인할 수 있는 파일을 올릴 수 있습니다.</small>
-            )}
-          </label>
-        ) : null}
-      </div>
+              {selectedRegionGroup ? (
+                <label className="input-label subregion-field">
+                  <span>{text.subregionLabel}</span>
+                  <select
+                    onChange={(event: { currentTarget: HTMLSelectElement }) => {
+                      setSubregion(event.currentTarget.value);
+                      onPdfReset();
+                    }}
+                    value={subregion}
+                  >
+                    <option value="">{text.subregionPlaceholder}</option>
+                    {selectedRegionGroup.cities.map((city, index) => (
+                      <option key={city} value={city}>
+                        {displayRegionsInEnglish ? selectedRegionGroup.citiesEn[index] ?? city : city}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              ) : null}
+            </>
+          ) : (
+            <label className="input-label">
+              <span>{text.answerLabel}</span>
+              <textarea
+                onChange={(event: { currentTarget: HTMLTextAreaElement }) =>
+                  updateAnswer(event.currentTarget.value)
+                }
+                placeholder={text.answerPlaceholder}
+                value={currentAnswer}
+              />
+            </label>
+          )}
+          {currentMeta?.allowUpload ? (
+            <label className="input-label upload-label">
+              <span>증거 파일 업로드</span>
+              <input
+                accept="image/*,.pdf"
+                multiple
+                onChange={(event: { currentTarget: HTMLInputElement }) => updateFiles(event.currentTarget.files)}
+                type="file"
+              />
+              {currentFiles.length ? (
+                <small>{currentFiles.map((file) => file.name).join(", ")}</small>
+              ) : (
+                <small>사진, PDF 등 상담사가 확인할 수 있는 파일을 올릴 수 있습니다.</small>
+              )}
+            </label>
+          ) : null}
+        </div>
+      ) : null}
+      {showWageLawMapper ? (
+        <WageLawMapperModule
+          language={language}
+          selectedOptions={selectedWageLawOptions}
+          onToggle={toggleWageLawOption}
+        />
+      ) : null}
+      {showLaborCalculator ? (
+        <LaborCalculatorModule
+          calculation={laborCalculation}
+          inputs={laborInputs}
+          language={language}
+          onChange={(nextInputs) => {
+            setLaborInputs(nextInputs);
+            onPdfReset();
+          }}
+        />
+      ) : null}
       <div className="intake-confirmation" aria-live="polite">
         <CheckCircle2 size={17} />
         <span>
@@ -1932,6 +2507,10 @@ function IntakeCard({
             ? region
               ? text.answerSaved
               : text.answerPending
+            : isUtilityStep
+              ? utilityStepComplete
+                ? text.answerSaved
+                : text.answerPending
             : currentAnswer || currentSelectedOptions.length
               ? text.answerSaved
               : text.answerPending}
@@ -1946,14 +2525,144 @@ function IntakeCard({
         >
           {text.back}
         </button>
-        <button className="primary-action" onClick={continueToOutput} type="button">
-          {questionIndex === questions.length - 1 ? text.reviewButton : text.continue}
+        <button className="primary-action mobile-sticky-action" onClick={continueToOutput} type="button">
+          {questionIndex === totalStepCount - 1 ? text.reviewButton : text.continue}
           <ArrowRight size={18} />
         </button>
       </div>
         </>
       )}
     </section>
+  );
+}
+
+function WageLawMapperModule({
+  language,
+  onToggle,
+  selectedOptions,
+}: {
+  language: LanguageCode;
+  onToggle: (option: string) => void;
+  selectedOptions: string[];
+}) {
+  const mapperText = getWageLawMapperCopy(language);
+
+  return (
+    <section className="wage-law-mapper" aria-label={mapperText.title}>
+      <div className="labor-calculator-heading">
+        <FileText size={22} />
+        <div>
+          <h4>{mapperText.title}</h4>
+          <p>{mapperText.body}</p>
+        </div>
+      </div>
+      <div className="wage-law-sections">
+        {wageLawOptionGroups.map((group) => (
+          <section className="wage-law-section" key={group.key}>
+            <h5>{group.title[language] ?? group.title.en}</h5>
+            <div className="wage-law-options">
+              {group.options.map((key) => {
+                const option = wageLawOptionLabels[key][language] ?? wageLawOptionLabels[key].en;
+
+                return (
+                  <label className="mcq-option" key={key}>
+                    <input checked={selectedOptions.includes(option)} onChange={() => onToggle(option)} type="checkbox" />
+                    <span>{option}</span>
+                  </label>
+                );
+              })}
+            </div>
+          </section>
+        ))}
+      </div>
+      <p className="wage-law-note">{mapperText.note}</p>
+    </section>
+  );
+}
+
+function LaborCalculatorModule({
+  calculation,
+  inputs,
+  language,
+  onChange,
+}: {
+  calculation: LaborCalculation | null;
+  inputs: LaborCalculatorInputs;
+  language: LanguageCode;
+  onChange: (inputs: LaborCalculatorInputs) => void;
+}) {
+  const calculatorText = laborCalculatorCopy[language];
+  const updateInput = (key: keyof LaborCalculatorInputs, value: string) => {
+    onChange({
+      ...inputs,
+      [key]: value,
+    });
+  };
+
+  return (
+    <section className="labor-calculator" aria-label={calculatorText.title}>
+      <div className="labor-calculator-heading">
+        <CalculatorIcon />
+        <div>
+          <h4>{calculatorText.title}</h4>
+          <p>{calculatorText.disclaimer}</p>
+        </div>
+      </div>
+      <div className="labor-calculator-grid">
+        <label className="input-label">
+          <span>{calculatorText.startDate}</span>
+          <input
+            onChange={(event: { currentTarget: HTMLInputElement }) =>
+              updateInput("startDate", event.currentTarget.value)
+            }
+            type="date"
+            value={inputs.startDate}
+          />
+        </label>
+        <label className="input-label">
+          <span>{calculatorText.endDate}</span>
+          <input
+            onChange={(event: { currentTarget: HTMLInputElement }) =>
+              updateInput("endDate", event.currentTarget.value)
+            }
+            type="date"
+            value={inputs.endDate}
+          />
+        </label>
+        <label className="input-label">
+          <span>{calculatorText.recentWageTotal}</span>
+          <input
+            inputMode="numeric"
+            onChange={(event: { currentTarget: HTMLInputElement }) =>
+              updateInput("recentWageTotal", event.currentTarget.value)
+            }
+            placeholder="4200000"
+            value={inputs.recentWageTotal}
+          />
+        </label>
+      </div>
+      {calculation ? (
+        <div className="calculator-result">
+          <div>
+            <span>{calculatorText.averageDaily}</span>
+            <strong>{formatWon(calculation.averageDailyWage)}</strong>
+          </div>
+          <div>
+            <span>{calculatorText.estimated}</span>
+            <strong>{formatWon(calculation.estimatedSeverance)}</strong>
+          </div>
+          <p>{calculation.eligible ? calculatorText.eligible : calculatorText.ineligible}</p>
+        </div>
+      ) : null}
+    </section>
+  );
+}
+
+function CalculatorIcon() {
+  return (
+    <span className="calculator-icon" aria-hidden="true">
+      ₩
+    </span>
   );
 }
 
@@ -2008,7 +2717,7 @@ async function downloadCounselorPdf(intake: CompletedIntake) {
   return;
 
   const situation = situations.find((item) => item.id === intake.issueId) ?? situations[0];
-  const baseKoreanQuestions = scenarioQuestions[intake.issueId]?.ko ?? scenarioQuestions.wages.ko;
+  const baseKoreanQuestions = scenarioQuestions[intake.issueId]?.ko ?? scenarioQuestions.wages.ko ?? [];
   const koreanQuestions = baseKoreanQuestions.map((question, index) =>
     questionMeta[intake.issueId]?.[index]?.textKo ?? question,
   );
@@ -2177,6 +2886,23 @@ async function downloadUnpaidWagesPetitionPdf(intake: CompletedIntake) {
         })
         .join(", ")
     : "미기재";
+  const selectedLawOptions = intake.selectedOptions[WAGE_LAW_OPTION_INDEX] ?? [];
+  const wageLawGuideKeys = buildWageLawGuideKeys({
+    contractStatus,
+    laborCalculation: intake.laborCalculation,
+    selectedLawOptions,
+    translatedAnswers,
+  });
+  const wageLawGuideLines = wageLawGuideKeys.length
+    ? wageLawGuideKeys.flatMap((key, index) => {
+        const guide = wageLawMatrix[key];
+        return [
+          `${index + 1}. ${guide.article}`,
+          `   ${guide.koreanText}`,
+          "",
+        ];
+      })
+    : ["해당 항목 없음. 상담사가 원자료와 답변을 확인해 주세요."];
   const attachmentSummary = allAttachments.length
     ? allAttachments.map((file) => `질문 ${file.questionNumber}: ${file.name}`)
     : ["첨부파일 없음"];
@@ -2188,12 +2914,36 @@ async function downloadUnpaidWagesPetitionPdf(intake: CompletedIntake) {
   const narrative =
     `위 진정인은 위 사업장에서 근무하였고, 아래 체불 내용에 해당하는 임금, 연장근로수당, 퇴직금 등 금품을 현재까지 지급받지 못하였다고 진술합니다. ` +
     `구체적인 근무 기간 및 체불 기간, 금액은 노동자가 제공한 답변을 바탕으로 아래와 같이 정리하였으며, 상담사는 원자료와 증거자료를 확인한 뒤 고용노동부 진정 절차를 준비해 주시기 바랍니다.`;
+  const calculationLines = intake.laborCalculation
+    ? [
+        "4. 법정 퇴직금 및 수당 계산 참고",
+        `입사일 또는 첫 근무일: ${intake.laborCalculation.startDate}`,
+        `퇴사일 또는 마지막 근무일: ${intake.laborCalculation.endDate}`,
+        `총 재직일수: ${intake.laborCalculation.serviceDays.toLocaleString("ko-KR")}일`,
+        `최근 3개월 임금 합계: ${formatWon(parseMoneyInput(intake.laborCalculation.recentWageTotal))}`,
+        `1일 평균임금(입력값 기준): ${formatWon(intake.laborCalculation.averageDailyWage)}`,
+        `입력값 기준 예상 퇴직금: ${formatWon(intake.laborCalculation.estimatedSeverance)}`,
+        `검토 상태: ${
+          intake.laborCalculation.eligible
+            ? "재직기간 1년 이상으로 입력되어 퇴직금 검토 가능"
+            : "재직기간 1년 미만으로 입력되어 상담사 확인 필요"
+        }`,
+        "주의: 본 계산은 사용자가 입력한 값에 따른 예상액이며 실제 법정 금액은 임금 구성, 근무시간, 상여금 및 수당 포함 여부에 따라 달라질 수 있습니다.",
+      ]
+    : [
+        "4. 법정 퇴직금 및 수당 계산 참고",
+        "계산기 입력값 없음. 상담사가 입사일, 퇴사일, 최근 3개월 임금자료를 확인해 주세요.",
+      ];
 
   const summaryRows = [
     ["문서 유형", "임금체불 진정서 초안"],
     ["지역", intake.region],
     ["접수 일시", createdAt.toLocaleString("ko-KR")],
     ["번역 언어", formatLanguageName(intake.language)],
+    ...(intake.laborCalculation
+      ? [["입력값 기준 예상 퇴직금", formatWon(intake.laborCalculation.estimatedSeverance)]]
+      : []),
+    ...(wageLawGuideKeys.length ? [["법적 근거 가이드", `${wageLawGuideKeys.length}개 항목`]] : []),
     ["개인정보 보관", "PDF 생성 후 브라우저 메모리에서 삭제"],
   ];
   const lines = [
@@ -2211,7 +2961,12 @@ async function downloadUnpaidWagesPetitionPdf(intake: CompletedIntake) {
     narrative,
     `노동자 진술 요약: ${delinquencyDetails}`,
     "",
-    "4. 증거 자료 목록",
+    ...calculationLines,
+    "",
+    "5. 법적 근거 가이드",
+    "아래 항목은 선택지와 번역된 답변을 기준으로 자동 정리한 상담 참고용 가이드입니다. 법률 판단이 아니며, 상담사가 사실관계와 적용 요건을 확인해야 합니다.",
+    ...wageLawGuideLines,
+    "6. 증거 자료 목록",
     ...(noEvidenceOption && selectedEvidence.includes(noEvidenceOption)
       ? ["노동자는 현재 보유한 증거자료가 없다고 선택했습니다."]
       : evidenceRows),
@@ -2301,6 +3056,167 @@ function getQuestionOptions(
   }
 
   return localizedQuestionOptions[issueId]?.[questionIndex]?.[language] ?? [];
+}
+
+function getWageLawMapperCopy(language: LanguageCode) {
+  const copyByLanguage: Record<LanguageCode, { body: string; note: string; reviewTitle: string; title: string }> = {
+    en: {
+      body: "Choose any wage problems that clearly apply. These are mapped into the Korean PDF as a counselor reference.",
+      note: "This is a preparation guide, not a legal decision. A counselor should verify the facts.",
+      reviewTitle: "Mapped legal guide items",
+      title: "Legal basis guide",
+    },
+    fil: {
+      body: "Piliin ang wage problems na malinaw na tugma. Ilalagay ito sa Korean PDF bilang reference ng counselor.",
+      note: "Preparation guide ito, hindi legal decision. Kailangang i-check ng counselor ang facts.",
+      reviewTitle: "Mapped legal guide items",
+      title: "Legal basis guide",
+    },
+    id: {
+      body: "Pilih masalah upah yang jelas sesuai. Ini akan dipetakan ke PDF Korea sebagai referensi konselor.",
+      note: "Ini panduan persiapan, bukan keputusan hukum. Konselor perlu memeriksa faktanya.",
+      reviewTitle: "Item panduan hukum terpetakan",
+      title: "Panduan dasar hukum",
+    },
+    ko: {
+      body: "명확히 해당되는 임금 문제를 골라주세요. 선택한 항목은 상담사가 볼 한국어 PDF에 참고용 법적 근거로 정리됩니다.",
+      note: "이 섹션은 상담 준비용 가이드이며 법률 판단이 아닙니다. 상담사가 사실관계를 확인해야 합니다.",
+      reviewTitle: "매핑된 법적 근거 가이드",
+      title: "법적 근거 가이드",
+    },
+    th: {
+      body: "เลือกปัญหาค่าจ้างที่ตรงกับสถานการณ์อย่างชัดเจน รายการนี้จะถูกใส่ใน PDF ภาษาเกาหลีเพื่อให้ที่ปรึกษาใช้ตรวจสอบ",
+      note: "ส่วนนี้เป็นคู่มือเตรียมข้อมูล ไม่ใช่คำตัดสินทางกฎหมาย ที่ปรึกษาควรตรวจสอบข้อเท็จจริง",
+      reviewTitle: "รายการคู่มือกฎหมายที่จับคู่แล้ว",
+      title: "คู่มือฐานทางกฎหมาย",
+    },
+    vi: {
+      body: "Chọn các vấn đề tiền lương phù hợp rõ ràng. Các mục này sẽ được đưa vào PDF tiếng Hàn để tư vấn viên tham khảo.",
+      note: "Đây là hướng dẫn chuẩn bị, không phải kết luận pháp lý. Tư vấn viên cần kiểm tra sự thật.",
+      reviewTitle: "Các mục căn cứ pháp lý đã khớp",
+      title: "Hướng dẫn căn cứ pháp lý",
+    },
+  };
+
+  return copyByLanguage[language];
+}
+
+function mapSelectedWageLawOptions(selectedOptions: string[]) {
+  const selectedLabels = new Set(selectedOptions);
+
+  return wageLawOptionKeys.filter((key) =>
+    Object.values(wageLawOptionLabels[key]).some((label) => selectedLabels.has(label)),
+  );
+}
+
+function inferWageLawKeysFromKoreanText(text: string) {
+  const normalized = text.replace(/\s+/g, " ");
+  const matches: WageLawKey[] = [];
+  const add = (key: WageLawKey, pattern: RegExp) => {
+    if (pattern.test(normalized)) {
+      matches.push(key);
+    }
+  };
+
+  add("unpaid_basic_salary", /(월급|급여|임금|기본급|돈).{0,14}(못 받|안 줌|미지급|체불|받지 못)/);
+  add("unpaid_exit_clearance", /(퇴사|그만|일을 그만|퇴직).{0,30}(14일|2주|삼주|3주|정산|연락|못 받|미지급|체불)/);
+  add("unpaid_severance", /(퇴직금|퇴직 급여|severance|pesangon)/i);
+  add("unpaid_weekly_holiday_allowance", /(주휴|유급휴일|weekly holiday)/i);
+  add("unpaid_overtime_allowance", /(연장|야간|밤|휴일|초과|오버타임|overtime|night|holiday).{0,20}(수당|임금|돈|미지급|못 받|안 줌)/i);
+  add("no_written_contract", /(근로계약서|계약서).{0,18}(없|못 받|미교부|안 줌|작성하지)/);
+  add("unpaid_dismissal_notice_allowance", /(해고|잘렸|그만두라).{0,28}(예고|갑자기|즉시|수당|30일)/);
+  add("unpaid_shutdown_allowance", /(휴업|일감 부족|쉬라|출근하지 말).{0,24}(수당|임금|못 받|미지급|안 줌)/);
+  add("unpaid_annual_leave_allowance", /(연차|휴가).{0,24}(수당|미사용|못 받|미지급|정산)/);
+  add("no_pay_stub", /(임금명세서|급여명세서|명세서|pay stub).{0,18}(없|못 받|미교부|안 줌)/i);
+
+  return matches;
+}
+
+function buildWageLawGuideKeys({
+  contractStatus,
+  laborCalculation,
+  selectedLawOptions,
+  translatedAnswers,
+}: {
+  contractStatus: string;
+  laborCalculation?: LaborCalculation;
+  selectedLawOptions: string[];
+  translatedAnswers: string[];
+}) {
+  const keys = new Set<WageLawKey>();
+  mapSelectedWageLawOptions(selectedLawOptions).forEach((key) => keys.add(key));
+  inferWageLawKeysFromKoreanText(translatedAnswers.join("\n")).forEach((key) => keys.add(key));
+
+  if (contractStatus.includes("미보유")) {
+    keys.add("no_written_contract");
+  }
+
+  if (laborCalculation?.eligible) {
+    keys.add("unpaid_severance");
+  }
+
+  return [...keys];
+}
+
+function calculateLaborSeverance(startDate: string, endDate: string, recentWageTotal: string): LaborCalculation | null {
+  const start = parseDateInput(startDate);
+  const end = parseDateInput(endDate);
+  const wageTotal = parseMoneyInput(recentWageTotal);
+
+  if (!start || !end || !wageTotal || end < start) {
+    return null;
+  }
+
+  const recentPeriodStart = subtractMonths(end, 3);
+  const recentPeriodDays = Math.max(1, differenceInDays(recentPeriodStart, end));
+  const serviceDays = differenceInDays(start, end);
+  const averageDailyWage = wageTotal / recentPeriodDays;
+  const estimatedSeverance = averageDailyWage * 30 * (serviceDays / 365);
+
+  return {
+    averageDailyWage,
+    eligible: serviceDays >= 365,
+    endDate,
+    estimatedSeverance,
+    recentPeriodDays,
+    recentWageTotal,
+    serviceDays,
+    startDate,
+  };
+}
+
+function parseDateInput(value: string) {
+  if (!value) {
+    return null;
+  }
+
+  const date = new Date(`${value}T00:00:00`);
+  return Number.isNaN(date.getTime()) ? null : date;
+}
+
+function parseMoneyInput(value: string) {
+  const normalized = value.replace(/[^\d.]/g, "");
+  const amount = Number(normalized);
+  return Number.isFinite(amount) && amount > 0 ? amount : 0;
+}
+
+function subtractMonths(date: Date, months: number) {
+  const next = new Date(date);
+  next.setMonth(next.getMonth() - months);
+  return next;
+}
+
+function differenceInDays(start: Date, end: Date) {
+  const day = 1000 * 60 * 60 * 24;
+  return Math.max(0, Math.floor((end.getTime() - start.getTime()) / day) + 1);
+}
+
+function formatWon(value: number) {
+  return new Intl.NumberFormat("ko-KR", {
+    currency: "KRW",
+    maximumFractionDigits: 0,
+    style: "currency",
+  }).format(Math.round(value));
 }
 
 function splitSelectedOptions(answer: string) {
@@ -2469,6 +3385,8 @@ function playAudioSource(sourceUrl: string) {
 function getTtsLanguageTag(language: LanguageCode) {
   return {
     en: "en-US",
+    fil: "fil-PH",
+    id: "id-ID",
     ko: "ko-KR",
     th: "th-TH",
     vi: "vi-VN",
@@ -2522,7 +3440,14 @@ async function translateWithMyMemoryDirect(text: string, sourceLanguage: Languag
 }
 
 function normalizeTranslationSource(sourceLanguage: LanguageCode) {
-  return sourceLanguage === "vi" || sourceLanguage === "th" || sourceLanguage === "en"
+  if (sourceLanguage === "fil") {
+    return "tl";
+  }
+
+  return sourceLanguage === "vi" ||
+    sourceLanguage === "th" ||
+    sourceLanguage === "id" ||
+    sourceLanguage === "en"
     ? sourceLanguage
     : "en";
 }
@@ -2956,9 +3881,13 @@ function AdminPage() {
     return (
       <main className="admin-gate">
         <section className="gate-card" aria-labelledby="gate-title">
-          <span className="gate-icon">
-            <LockKeyhole size={28} />
-          </span>
+          <div className="gate-brand-row">
+            <img alt="LinkUP" className="brand-logo" src="/linkup-wordmark.png" />
+            <span className="gate-icon">
+              <LockKeyhole size={24} />
+            </span>
+          </div>
+          <p className="directory-label">NGO admin access</p>
           <h1 id="gate-title">NGO analytics are restricted</h1>
           <p>
             This page contains regional crisis trends and operational data. Enter an authorized
