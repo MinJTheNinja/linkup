@@ -26,6 +26,7 @@ import {
 } from "lucide-react";
 import type { CSSProperties } from "react";
 import { useEffect, useMemo, useState } from "react";
+import { Analytics } from "@vercel/analytics/react";
 
 declare global {
   interface Window {
@@ -1943,6 +1944,7 @@ function WorkerSite() {
       <section className="worker-legal-notice" aria-label="Privacy and legal notice">
         <p>{text.legalNotice}</p>
       </section>
+      <Analytics />
     </main>
   );
 }
