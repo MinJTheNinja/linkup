@@ -11,6 +11,7 @@
     "convex:import": "convex import --table guides convex/seed/guides.jsonl"
   },
   "dependencies": {
+    "@vercel/analytics": "^2.0.1",
     "@vitejs/plugin-react": "^5.0.0",
     "convex": "^1.28.0",
     "lucide-react": "^0.468.0",
