@@ -26,7 +26,7 @@ const getSubmissionStats = makeFunctionReference<"query", Record<string, never>,
 
 const resetSubmissions = makeFunctionReference<
   "mutation",
-  { adminCode: string },
+  { adminCode: string; resetCode: string },
   { deleted: number }
 >("submissions:reset");
 
@@ -83,13 +83,14 @@ http.route({
   handler: httpAction(async (ctx, request) => {
     const body = await request.json();
 
-    if (!body || typeof body.adminCode !== "string") {
+    if (!body || typeof body.adminCode !== "string" || typeof body.resetCode !== "string") {
       return jsonResponse({ error: "Invalid reset body." }, 400);
     }
 
     try {
       const result = await ctx.runMutation(resetSubmissions, {
         adminCode: body.adminCode,
+        resetCode: body.resetCode,
       });
       return jsonResponse(result);
     } catch {
@@ -237,7 +238,17 @@ async function translateWithMyMemory(text: string, sourceLanguage: string) {
 }
 
 function normalizeSourceLanguage(sourceLanguage: string) {
-  if (sourceLanguage === "vi" || sourceLanguage === "th" || sourceLanguage === "en") {
+  if (
+    sourceLanguage === "vi" ||
+    sourceLanguage === "th" ||
+    sourceLanguage === "id" ||
+    sourceLanguage === "fil" ||
+    sourceLanguage === "tl" ||
+    sourceLanguage === "en"
+  ) {
+    if (sourceLanguage === "fil") {
+      return "tl";
+    }
     return sourceLanguage;
   }
 
@@ -245,7 +256,18 @@ function normalizeSourceLanguage(sourceLanguage: string) {
 }
 
 function normalizeTtsLanguage(language: string) {
-  if (language === "vi" || language === "th" || language === "ko" || language === "en") {
+  if (
+    language === "vi" ||
+    language === "th" ||
+    language === "id" ||
+    language === "tl" ||
+    language === "fil" ||
+    language === "ko" ||
+    language === "en"
+  ) {
+    if (language === "fil") {
+      return "tl";
+    }
     return language;
   }
 

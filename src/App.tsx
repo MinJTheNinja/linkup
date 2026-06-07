@@ -87,6 +87,8 @@ type QuestionMeta = {
   textKo?: string;
 };
 
+type StructuredAnswerMap = Record<number, Record<string, string>>;
+
 type LocalizedOptions = Partial<Record<LanguageCode, string[]>>;
 
 type WageLawKey =
@@ -197,6 +199,116 @@ const regionGroups = [
     label: "잘 모르겠어요",
   },
 ];
+const expandedRegionGroups = [
+  {
+    label: "서울특별시",
+    labelEn: "Seoul",
+    cities: ["종로구", "중구", "용산구", "성동구", "광진구", "동대문구", "중랑구", "성북구", "강북구", "도봉구", "노원구", "은평구", "서대문구", "마포구", "양천구", "강서구", "구로구", "금천구", "영등포구", "동작구", "관악구", "서초구", "강남구", "송파구", "강동구"],
+    citiesEn: ["Jongno-gu", "Jung-gu", "Yongsan-gu", "Seongdong-gu", "Gwangjin-gu", "Dongdaemun-gu", "Jungnang-gu", "Seongbuk-gu", "Gangbuk-gu", "Dobong-gu", "Nowon-gu", "Eunpyeong-gu", "Seodaemun-gu", "Mapo-gu", "Yangcheon-gu", "Gangseo-gu", "Guro-gu", "Geumcheon-gu", "Yeongdeungpo-gu", "Dongjak-gu", "Gwanak-gu", "Seocho-gu", "Gangnam-gu", "Songpa-gu", "Gangdong-gu"],
+  },
+  {
+    label: "부산광역시",
+    labelEn: "Busan",
+    cities: ["중구", "서구", "동구", "영도구", "부산진구", "동래구", "남구", "북구", "해운대구", "사하구", "금정구", "강서구", "연제구", "수영구", "사상구", "기장군"],
+    citiesEn: ["Jung-gu", "Seo-gu", "Dong-gu", "Yeongdo-gu", "Busanjin-gu", "Dongnae-gu", "Nam-gu", "Buk-gu", "Haeundae-gu", "Saha-gu", "Geumjeong-gu", "Gangseo-gu", "Yeonje-gu", "Suyeong-gu", "Sasang-gu", "Gijang-gun"],
+  },
+  {
+    label: "대구광역시",
+    labelEn: "Daegu",
+    cities: ["중구", "동구", "서구", "남구", "북구", "수성구", "달서구", "달성군", "군위군"],
+    citiesEn: ["Jung-gu", "Dong-gu", "Seo-gu", "Nam-gu", "Buk-gu", "Suseong-gu", "Dalseo-gu", "Dalseong-gun", "Gunwi-gun"],
+  },
+  {
+    label: "인천광역시",
+    labelEn: "Incheon",
+    cities: ["중구", "동구", "미추홀구", "연수구", "남동구", "부평구", "계양구", "서구", "강화군", "옹진군"],
+    citiesEn: ["Jung-gu", "Dong-gu", "Michuhol-gu", "Yeonsu-gu", "Namdong-gu", "Bupyeong-gu", "Gyeyang-gu", "Seo-gu", "Ganghwa-gun", "Ongjin-gun"],
+  },
+  {
+    label: "광주광역시",
+    labelEn: "Gwangju",
+    cities: ["동구", "서구", "남구", "북구", "광산구"],
+    citiesEn: ["Dong-gu", "Seo-gu", "Nam-gu", "Buk-gu", "Gwangsan-gu"],
+  },
+  {
+    label: "대전광역시",
+    labelEn: "Daejeon",
+    cities: ["동구", "중구", "서구", "유성구", "대덕구"],
+    citiesEn: ["Dong-gu", "Jung-gu", "Seo-gu", "Yuseong-gu", "Daedeok-gu"],
+  },
+  {
+    label: "울산광역시",
+    labelEn: "Ulsan",
+    cities: ["중구", "남구", "동구", "북구", "울주군"],
+    citiesEn: ["Jung-gu", "Nam-gu", "Dong-gu", "Buk-gu", "Ulju-gun"],
+  },
+  {
+    label: "세종특별자치시",
+    labelEn: "Sejong",
+    cities: ["세종시"],
+    citiesEn: ["Sejong-si"],
+  },
+  {
+    label: "경기도",
+    labelEn: "Gyeonggi-do",
+    cities: ["수원시", "성남시", "고양시", "용인시", "부천시", "안산시", "안양시", "남양주시", "화성시", "평택시", "의정부시", "시흥시", "파주시", "김포시", "광명시", "광주시", "군포시", "이천시", "오산시", "하남시", "양주시", "구리시", "안성시", "포천시", "의왕시", "여주시", "동두천시", "과천시", "가평군", "양평군", "연천군"],
+    citiesEn: ["Suwon-si", "Seongnam-si", "Goyang-si", "Yongin-si", "Bucheon-si", "Ansan-si", "Anyang-si", "Namyangju-si", "Hwaseong-si", "Pyeongtaek-si", "Uijeongbu-si", "Siheung-si", "Paju-si", "Gimpo-si", "Gwangmyeong-si", "Gwangju-si", "Gunpo-si", "Icheon-si", "Osan-si", "Hanam-si", "Yangju-si", "Guri-si", "Anseong-si", "Pocheon-si", "Uiwang-si", "Yeoju-si", "Dongducheon-si", "Gwacheon-si", "Gapyeong-gun", "Yangpyeong-gun", "Yeoncheon-gun"],
+  },
+  {
+    label: "강원특별자치도",
+    labelEn: "Gangwon State",
+    cities: ["춘천시", "원주시", "강릉시", "동해시", "태백시", "속초시", "삼척시", "홍천군", "횡성군", "영월군", "평창군", "정선군", "철원군", "화천군", "양구군", "인제군", "고성군", "양양군"],
+    citiesEn: ["Chuncheon-si", "Wonju-si", "Gangneung-si", "Donghae-si", "Taebaek-si", "Sokcho-si", "Samcheok-si", "Hongcheon-gun", "Hoengseong-gun", "Yeongwol-gun", "Pyeongchang-gun", "Jeongseon-gun", "Cheorwon-gun", "Hwacheon-gun", "Yanggu-gun", "Inje-gun", "Goseong-gun", "Yangyang-gun"],
+  },
+  {
+    label: "충청북도",
+    labelEn: "Chungcheongbuk-do",
+    cities: ["청주시", "충주시", "제천시", "보은군", "옥천군", "영동군", "증평군", "진천군", "괴산군", "음성군", "단양군"],
+    citiesEn: ["Cheongju-si", "Chungju-si", "Jecheon-si", "Boeun-gun", "Okcheon-gun", "Yeongdong-gun", "Jeungpyeong-gun", "Jincheon-gun", "Goesan-gun", "Eumseong-gun", "Danyang-gun"],
+  },
+  {
+    label: "충청남도",
+    labelEn: "Chungcheongnam-do",
+    cities: ["천안시", "공주시", "보령시", "아산시", "서산시", "논산시", "계룡시", "당진시", "금산군", "부여군", "서천군", "청양군", "홍성군", "예산군", "태안군"],
+    citiesEn: ["Cheonan-si", "Gongju-si", "Boryeong-si", "Asan-si", "Seosan-si", "Nonsan-si", "Gyeryong-si", "Dangjin-si", "Geumsan-gun", "Buyeo-gun", "Seocheon-gun", "Cheongyang-gun", "Hongseong-gun", "Yesan-gun", "Taean-gun"],
+  },
+  {
+    label: "전북특별자치도",
+    labelEn: "Jeonbuk State",
+    cities: ["전주시", "군산시", "익산시", "정읍시", "남원시", "김제시", "완주군", "진안군", "무주군", "장수군", "임실군", "순창군", "고창군", "부안군"],
+    citiesEn: ["Jeonju-si", "Gunsan-si", "Iksan-si", "Jeongeup-si", "Namwon-si", "Gimje-si", "Wanju-gun", "Jinan-gun", "Muju-gun", "Jangsu-gun", "Imsil-gun", "Sunchang-gun", "Gochang-gun", "Buan-gun"],
+  },
+  {
+    label: "전라남도",
+    labelEn: "Jeollanam-do",
+    cities: ["목포시", "여수시", "순천시", "나주시", "광양시", "담양군", "곡성군", "구례군", "고흥군", "보성군", "화순군", "장흥군", "강진군", "해남군", "영암군", "무안군", "함평군", "영광군", "장성군", "완도군", "진도군", "신안군"],
+    citiesEn: ["Mokpo-si", "Yeosu-si", "Suncheon-si", "Naju-si", "Gwangyang-si", "Damyang-gun", "Gokseong-gun", "Gurye-gun", "Goheung-gun", "Boseong-gun", "Hwasun-gun", "Jangheung-gun", "Gangjin-gun", "Haenam-gun", "Yeongam-gun", "Muan-gun", "Hampyeong-gun", "Yeonggwang-gun", "Jangseong-gun", "Wando-gun", "Jindo-gun", "Sinan-gun"],
+  },
+  {
+    label: "경상북도",
+    labelEn: "Gyeongsangbuk-do",
+    cities: ["포항시", "경주시", "김천시", "안동시", "구미시", "영주시", "영천시", "상주시", "문경시", "경산시", "의성군", "청송군", "영양군", "영덕군", "청도군", "고령군", "성주군", "칠곡군", "예천군", "봉화군", "울진군", "울릉군"],
+    citiesEn: ["Pohang-si", "Gyeongju-si", "Gimcheon-si", "Andong-si", "Gumi-si", "Yeongju-si", "Yeongcheon-si", "Sangju-si", "Mungyeong-si", "Gyeongsan-si", "Uiseong-gun", "Cheongsong-gun", "Yeongyang-gun", "Yeongdeok-gun", "Cheongdo-gun", "Goryeong-gun", "Seongju-gun", "Chilgok-gun", "Yecheon-gun", "Bonghwa-gun", "Uljin-gun", "Ulleung-gun"],
+  },
+  {
+    label: "경상남도",
+    labelEn: "Gyeongsangnam-do",
+    cities: ["창원시", "진주시", "통영시", "사천시", "김해시", "밀양시", "거제시", "양산시", "의령군", "함안군", "창녕군", "고성군", "남해군", "하동군", "산청군", "함양군", "거창군", "합천군"],
+    citiesEn: ["Changwon-si", "Jinju-si", "Tongyeong-si", "Sacheon-si", "Gimhae-si", "Miryang-si", "Geoje-si", "Yangsan-si", "Uiryeong-gun", "Haman-gun", "Changnyeong-gun", "Goseong-gun", "Namhae-gun", "Hadong-gun", "Sancheong-gun", "Hamyang-gun", "Geochang-gun", "Hapcheon-gun"],
+  },
+  {
+    label: "제주특별자치도",
+    labelEn: "Jeju",
+    cities: ["제주시", "서귀포시"],
+    citiesEn: ["Jeju-si", "Seogwipo-si"],
+  },
+  {
+    label: "잘 모르겠어요",
+    labelEn: "Not sure",
+    cities: ["세부 지역을 모르겠어요"],
+    citiesEn: ["Detailed region unknown"],
+  },
+];
 const languageNames: Record<string, string> = {
   en: "English",
   fil: "Filipino",
@@ -216,18 +328,19 @@ const languages: Array<{ code: LanguageCode; flagSrc: string; label: string; sho
   { code: "id", flagSrc: "/flags/id.svg", label: "Bahasa Indonesia", shortLabel: "ID" },
   { code: "fil", flagSrc: "/flags/ph.svg", label: "Filipino", shortLabel: "PH" },
 ];
+const selectableLanguages = languages.filter((item) => item.code !== "ko");
 
 const copy = {
   en: {
     hero: "What problem are you facing right now?",
-    heroTitle: "Prepare your situation for support in Korean.",
+    heroTitle: "Support for every worker, regardless of visa status",
     support: "Answer a few clear questions. Your private details stay on this device, and the final PDF is prepared in Korean.",
     emergency: "Immediate danger? Call 112 or ask a counselor now.",
     step: "Step 2 of 4",
     stepTitle: "Payday details",
     question: "When was your last payday?",
     help: "It is okay if you are not exact. Choose the closest answer.",
-    continue: "Continue safely",
+    continue: "Continue",
     intakeEyebrow: "Tailored intake",
     intakeHeading: "Simple questions, counselor-ready answers",
     stepOf: (step: number, total: number) => `Step ${step} of ${total}`,
@@ -253,7 +366,7 @@ const copy = {
     ttsMissing: "This browser does not have a voice for this language. Try Chrome or Edge with language voices installed.",
     ttsPlaying: "Reading the question aloud.",
     legalNotice:
-      "Privacy and legal notice: LinkUP does not collect or store your private details. This tool helps prepare information for a counselor and is not a law firm, lawyer, or substitute for legal advice.",
+      "Privacy and legal notice: your private information stays on this device during the session and is never shared with outside parties. LinkUP sends only anonymous issue, region, and language counts to the dashboard. This tool prepares information for a counselor and is not a law firm, lawyer, or substitute for legal advice.",
     pathwayTitle: "From first concern to counselor-ready support",
     pathwaySteps: ["Choose issue", "Answer safely", "Download PDF", "Share with counselor"],
     triagePanelTitle: "What problem are you facing right now?",
@@ -516,18 +629,18 @@ const howPageCopy: Record<
     detailBodyTwo:
       "When the PDF is downloaded or the tab is closed, private intake details are cleared from the app state.",
     eyebrow: "How this works",
-    heroTitle: "From first concern to counselor-ready support",
+    heroTitle: "Prepare your situation for support in Korean.",
     heroBody:
       "LinkUP helps workers describe urgent labor problems in plain language, then turns the intake into a structured Korean PDF for a counselor.",
-    processTitle: "How LinkUP works",
+    processTitle: "How this works",
     steps: [
       {
         title: "1. Choose the closest issue",
         body: "The worker starts with a simple triage choice. The first screen avoids legal language and uses clear scenario cards plus search.",
       },
       {
-        title: "2. Answer safely",
-        body: "Personal details stay only in the browser while the worker answers. Region, issue type, and language are used for anonymous trend data.",
+        title: "2. Answer with confidence",
+        body: "Personal details remain strictly within the browser. Region, issue type, and language are used anonymously for trend analysis.",
       },
       {
         title: "3. Download the Korean PDF",
@@ -535,7 +648,7 @@ const howPageCopy: Record<
       },
       {
         title: "4. Share with a trusted counselor",
-        body: "The worker can hand the PDF to an NGO counselor or staff member. LinkUP is an intake preparation tool, not a law firm or legal service.",
+        body: "The worker can hand the PDF to an NGO counselor or staff member. Please note that LinkUP is an intake preparation tool, not a law firm or legal service.",
       },
     ],
   },
@@ -1204,10 +1317,10 @@ const scenarioQuestions: Record<string, Partial<Record<LanguageCode, string[]>>>
   },
   contract: {
     en: [
-      "What is your exact visa status right now, such as E-9, H-2, E-7, or G-1?",
+      "What is your exact visa status right now? (E-9, H-2, E-7, G-1)",
       "When does your current visa stay period expire, and when does your active labor contract end?",
       "Are you looking to change your workplace due to an employer conflict, or has your employer threatened to terminate your contract early?",
-      "Has your current employer agreed to sign a Release Form, 이적동의서 or 고용변동신고서, or are they refusing to give you permission to leave?",
+      "Has your current employer agreed to sign a workplace transfer or employment-change release form, or are they refusing to give you permission to leave?",
     ],
     ko: [
       "현재 정확한 체류자격은 무엇인가요? 예: E-9, H-2, E-7, G-1",
@@ -1284,10 +1397,10 @@ const scenarioQuestions: Record<string, Partial<Record<LanguageCode, string[]>>>
 
 const unpaidWagesPetitionQuestions: Partial<Record<LanguageCode, string[]>> = {
   en: [
-    "Worker details: please enter your name, visa type, and contact number.",
-    "Workplace details: please enter the company/workplace name and your boss or employer's name.",
-    "Employment details: when did you start working, when did you stop or are you still working, and do you have a written labor contract?",
-    "Unpaid wage details: what months or dates were unpaid, approximately how much is owed, and what evidence do you have?",
+    "Worker Details: Please enter your name, visa type, and contact number.",
+    "Workplace Details: Please enter the company/workplace name and your boss or employer's name.",
+    "Employment Details: Please enter your employment period and written labor contract status.",
+    "Unpaid Wage Details: Please enter the unpaid months or dates, estimated amount owed, and evidence you have.",
   ],
   ko: [
     "인적사항: 성명, 비자 종류, 연락처를 적어주세요.",
@@ -1308,6 +1421,172 @@ const unpaidWagesPetitionQuestions: Partial<Record<LanguageCode, string[]>> = {
     "รายละเอียดค่าจ้างค้างจ่าย: เดือนไหนหรือวันไหนยังไม่ได้รับเงิน จำนวนประมาณเท่าไร และมีหลักฐานอะไรบ้าง",
   ],
 };
+
+const structuredQuestionCopy: Record<
+  LanguageCode,
+  {
+    contract: string;
+    contractNo: string;
+    contractUnsure: string;
+    contractYes: string;
+    contact: string;
+    currentJob: string;
+    endDate: string;
+    employmentStatus: string;
+    stillWorking: string;
+    name: string;
+    startDate: string;
+    stoppedWorking: string;
+    uploadEmpty: string;
+    uploadLabel: string;
+    visa: string;
+  }
+> = {
+  en: {
+    contract: "Written labor contract",
+    contractNo: "No written contract",
+    contractUnsure: "I am not sure",
+    contractYes: "Written labor contract exists",
+    contact: "Contact number",
+    currentJob: "Are you still working there?",
+    employmentStatus: "Current work status",
+    endDate: "Last day worked",
+    name: "Full name",
+    startDate: "First day worked",
+    stillWorking: "I am still working there",
+    stoppedWorking: "I stopped working there",
+    uploadEmpty: "You can upload photos, PDFs, or other files a counselor can review.",
+    uploadLabel: "Evidence file upload",
+    visa: "Visa type",
+  },
+  ko: {
+    contract: "서면 근로계약서",
+    contractNo: "근로계약서가 없어요",
+    contractUnsure: "잘 모르겠어요",
+    contractYes: "근로계약서가 있어요",
+    contact: "연락처",
+    currentJob: "현재도 그곳에서 일하고 있나요?",
+    employmentStatus: "현재 근무 상태",
+    endDate: "마지막으로 일한 날",
+    name: "성명",
+    startDate: "처음 일한 날",
+    stillWorking: "지금도 일하고 있어요",
+    stoppedWorking: "그만두었어요",
+    uploadEmpty: "사진, PDF 등 상담사가 확인할 수 있는 파일을 올릴 수 있습니다.",
+    uploadLabel: "증거 파일 업로드",
+    visa: "비자 종류",
+  },
+  vi: {
+    contract: "Hợp đồng lao động bằng văn bản",
+    contractNo: "Không có hợp đồng bằng văn bản",
+    contractUnsure: "Tôi không chắc",
+    contractYes: "Có hợp đồng lao động bằng văn bản",
+    contact: "Số liên lạc",
+    currentJob: "Bạn còn làm ở đó không?",
+    employmentStatus: "Tình trạng làm việc hiện tại",
+    endDate: "Ngày làm việc cuối cùng",
+    name: "Họ tên",
+    startDate: "Ngày bắt đầu làm việc",
+    stillWorking: "Tôi vẫn đang làm ở đó",
+    stoppedWorking: "Tôi đã nghỉ việc ở đó",
+    uploadEmpty: "Bạn có thể tải ảnh, PDF hoặc tài liệu để tư vấn viên xem.",
+    uploadLabel: "Tải tệp bằng chứng",
+    visa: "Loại visa",
+  },
+  th: {
+    contract: "สัญญาจ้างงานเป็นลายลักษณ์อักษร",
+    contractNo: "ไม่มีสัญญาเป็นลายลักษณ์อักษร",
+    contractUnsure: "ไม่แน่ใจ",
+    contractYes: "มีสัญญาจ้างงานเป็นลายลักษณ์อักษร",
+    contact: "เบอร์ติดต่อ",
+    currentJob: "ตอนนี้ยังทำงานที่นั่นอยู่หรือไม่?",
+    employmentStatus: "สถานะการทำงานปัจจุบัน",
+    endDate: "วันสุดท้ายที่ทำงาน",
+    name: "ชื่อ-นามสกุล",
+    startDate: "วันแรกที่เริ่มทำงาน",
+    stillWorking: "ยังทำงานอยู่",
+    stoppedWorking: "หยุดทำงานแล้ว",
+    uploadEmpty: "คุณสามารถอัปโหลดรูปภาพ PDF หรือไฟล์ให้ที่ปรึกษาตรวจได้",
+    uploadLabel: "อัปโหลดไฟล์หลักฐาน",
+    visa: "ประเภทวีซ่า",
+  },
+  id: {
+    contract: "Kontrak kerja tertulis",
+    contractNo: "Tidak ada kontrak tertulis",
+    contractUnsure: "Saya tidak yakin",
+    contractYes: "Ada kontrak kerja tertulis",
+    contact: "Nomor kontak",
+    currentJob: "Apakah Anda masih bekerja di sana?",
+    employmentStatus: "Status kerja saat ini",
+    endDate: "Hari terakhir bekerja",
+    name: "Nama lengkap",
+    startDate: "Hari pertama bekerja",
+    stillWorking: "Saya masih bekerja di sana",
+    stoppedWorking: "Saya sudah berhenti bekerja di sana",
+    uploadEmpty: "Anda dapat mengunggah foto, PDF, atau file lain untuk ditinjau konselor.",
+    uploadLabel: "Unggah file bukti",
+    visa: "Jenis visa",
+  },
+  fil: {
+    contract: "Nakasulat na kontrata sa trabaho",
+    contractNo: "Walang nakasulat na kontrata",
+    contractUnsure: "Hindi ako sigurado",
+    contractYes: "May nakasulat na kontrata sa trabaho",
+    contact: "Contact number",
+    currentJob: "Nagtatrabaho ka pa rin ba doon?",
+    employmentStatus: "Kasalukuyang work status",
+    endDate: "Huling araw ng trabaho",
+    name: "Buong pangalan",
+    startDate: "Unang araw ng trabaho",
+    stillWorking: "Nagtatrabaho pa rin ako doon",
+    stoppedWorking: "Tumigil na akong magtrabaho doon",
+    uploadEmpty: "Maaari kang mag-upload ng larawan, PDF, o ibang file na puwedeng tingnan ng counselor.",
+    uploadLabel: "Upload ng evidence file",
+    visa: "Uri ng visa",
+  },
+};
+
+const uploadPickerCopy: Record<LanguageCode, { choose: string; selected: (count: number) => string }> = {
+  en: {
+    choose: "Choose evidence files",
+    selected: (count) => `${count} file${count === 1 ? "" : "s"} selected`,
+  },
+  ko: {
+    choose: "증거 파일 선택",
+    selected: (count) => `${count}개 파일 선택됨`,
+  },
+  vi: {
+    choose: "Chọn tệp bằng chứng",
+    selected: (count) => `Đã chọn ${count} tệp`,
+  },
+  th: {
+    choose: "เลือกไฟล์หลักฐาน",
+    selected: (count) => `เลือกไฟล์แล้ว ${count} ไฟล์`,
+  },
+  id: {
+    choose: "Pilih file bukti",
+    selected: (count) => `${count} file dipilih`,
+  },
+  fil: {
+    choose: "Pumili ng evidence files",
+    selected: (count) => `${count} file ang napili`,
+  },
+};
+
+function isDetailOption(option: string) {
+  const normalized = option.normalize("NFKC").trim().toLowerCase();
+  return [
+    "other",
+    "기타",
+    "khác",
+    "khac",
+    "อื่น",
+    "lainnya",
+    "lain",
+    "iba",
+    "other / please describe",
+  ].some((keyword) => normalized.includes(keyword));
+}
 
 const questionMeta: Record<string, QuestionMeta[]> = {
   wages: [
@@ -1799,13 +2078,21 @@ function WorkerSite() {
     }, 100);
   };
 
+  const resetWorkerHome = () => {
+    setSelectedIssue(null);
+    setIsPdfReady(false);
+    setCompletedIntake(null);
+    setTriageSearch("");
+    setResetToken((current) => current + 1);
+  };
+
   return (
     <main className="site-shell" lang={language}>
       {showLanguageModal ? (
         <LanguageChoiceModal selectedLanguage={language} onSelect={chooseLanguage} />
       ) : null}
       <header className="site-nav">
-        <a className="brand-link" href="#top" aria-label="LinkUP home">
+        <a className="brand-link" href="#top" aria-label="LinkUP home" onClick={resetWorkerHome}>
           <img alt="LinkUP" className="brand-logo" src="/linkup-wordmark.png" />
         </a>
         <nav aria-label="Primary navigation">
@@ -1903,11 +2190,6 @@ function WorkerSite() {
 
         {selectedSituation ? (
         <section className="workflow-section workflow-section-revealed" id="intake">
-          <div className="intake-sticky-summary">
-            <strong>{selectedSituation.label[language]}</strong>
-            <span>{text.stepOf(1, selectedSituation.id === "wages" ? 7 : 5)}</span>
-            <span>{text.localOnlyLabel}</span>
-          </div>
           <div className="section-heading">
             <p className="eyebrow">{text.intakeEyebrow}</p>
             <h2>{text.intakeHeading}</h2>
@@ -1950,7 +2232,6 @@ function WorkerSite() {
 function getSavedLanguage(): LanguageCode {
   const savedLanguage = localStorage.getItem("linkup-language");
   return savedLanguage === "en" ||
-    savedLanguage === "ko" ||
     savedLanguage === "vi" ||
     savedLanguage === "th" ||
     savedLanguage === "id" ||
@@ -1970,7 +2251,7 @@ function LanguageSelector({
   onToggle: () => void;
   selectedLanguage: LanguageCode;
 }) {
-  const selected = languages.find((item) => item.code === selectedLanguage) ?? languages[0];
+  const selected = selectableLanguages.find((item) => item.code === selectedLanguage) ?? selectableLanguages[0];
 
   return (
     <div className="language-picker">
@@ -1987,7 +2268,7 @@ function LanguageSelector({
       </button>
       {isOpen ? (
         <div className="language-menu" role="listbox" aria-label="Choose interface language">
-          {languages.map((item) => (
+          {selectableLanguages.map((item) => (
             <button
               aria-selected={item.code === selectedLanguage}
               className={item.code === selectedLanguage ? "selected" : ""}
@@ -2021,7 +2302,7 @@ function LanguageChoiceModal({
         <h2 id="language-modal-title">Choose your language</h2>
         <p>This helps LinkUP show questions and guidance in the language that feels safest for you.</p>
         <div className="language-modal-grid">
-          {languages.map((item) => (
+          {selectableLanguages.map((item) => (
             <button
               className={item.code === selectedLanguage ? "selected" : ""}
               key={item.code}
@@ -2038,14 +2319,44 @@ function LanguageChoiceModal({
   );
 }
 
+function composeWorkerDetails(fields: Record<string, string>, language: LanguageCode) {
+  const labels = structuredQuestionCopy[language];
+  return [
+    `${labels.name}: ${fields.name ?? ""}`,
+    `${labels.visa}: ${fields.visa ?? ""}`,
+    `${labels.contact}: ${fields.contact ?? ""}`,
+  ]
+    .filter((item) => item.split(":").slice(1).join(":").trim())
+    .join("; ");
+}
+
+function composeEmploymentDetails(fields: Record<string, string>, language: LanguageCode) {
+  const labels = structuredQuestionCopy[language];
+  const parts = [
+    `${labels.startDate}: ${fields.startDate ?? ""}`,
+    `${labels.employmentStatus}: ${fields.status ?? ""}`,
+    fields.status === labels.stoppedWorking ? `${labels.endDate}: ${fields.endDate ?? ""}` : "",
+    `${labels.contract}: ${fields.contract ?? ""}`,
+  ];
+  return parts
+    .filter((item) => item && item.split(":").slice(1).join(":").trim())
+    .join("; ");
+}
+
 function HowItWorksPage() {
-  const selectedLanguage = getSavedLanguage();
+  const [selectedLanguage, setSelectedLanguage] = useState<LanguageCode>(() => getSavedLanguage());
+  const [isLanguageMenuOpen, setIsLanguageMenuOpen] = useState(false);
   const text = copy[selectedLanguage];
   const pageText = howPageCopy[selectedLanguage];
   const steps = pageText.steps.map((step, index) => ({
     ...step,
     icon: [Globe2, CheckCircle2, Download, MapPinned][index] ?? CheckCircle2,
   }));
+  const chooseLanguage = (nextLanguage: LanguageCode) => {
+    localStorage.setItem("linkup-language", nextLanguage);
+    setSelectedLanguage(nextLanguage);
+    setIsLanguageMenuOpen(false);
+  };
 
   return (
     <main className="site-shell how-page" lang={selectedLanguage}>
@@ -2054,6 +2365,12 @@ function HowItWorksPage() {
           <img alt="LinkUP" className="brand-logo" src="/linkup-wordmark.png" />
         </a>
         <nav aria-label="Primary navigation">
+          <LanguageSelector
+            isOpen={isLanguageMenuOpen}
+            onSelect={chooseLanguage}
+            onToggle={() => setIsLanguageMenuOpen((current) => !current)}
+            selectedLanguage={selectedLanguage}
+          />
           <a href="#/">{pageText.backToWorker}</a>
           <a href="#/admin">Admin</a>
         </nav>
@@ -2061,19 +2378,12 @@ function HowItWorksPage() {
 
       <section className="how-hero" aria-labelledby="how-title">
         <div className="how-hero-copy">
-          <p className="eyebrow">{pageText.eyebrow}</p>
           <h1 id="how-title">{pageText.heroTitle}</h1>
-          <p>{pageText.heroBody}</p>
-          <div className="how-hero-trust" aria-label="LinkUP privacy and output highlights">
-            <span>{text.localOnlyLabel}</span>
-            <span>{text.pdfOutputLabel}</span>
-          </div>
         </div>
       </section>
 
       <section className="how-process-intro" aria-label={pageText.ariaPathway}>
         <div>
-          <p className="directory-label">{pageText.eyebrow}</p>
           <h2>{pageText.processTitle}</h2>
         </div>
         <p>{pageText.detailBodyOne}</p>
@@ -2087,10 +2397,9 @@ function HowItWorksPage() {
               <Icon size={26} />
             </span>
             <div>
-              <h2>{title}</h2>
+              <h2>{title.replace(/^\d+\.\s*/, "")}</h2>
               <p>{body}</p>
             </div>
-            <ArrowRight aria-hidden="true" className="how-step-arrow" size={20} />
           </article>
         ))}
       </section>
@@ -2140,6 +2449,7 @@ function IntakeCard({
   const [answers, setAnswers] = useState<string[]>(() => Array(baseQuestions.length).fill(""));
   const [attachments, setAttachments] = useState<Record<number, UploadedFile[]>>({});
   const [selectedOptions, setSelectedOptions] = useState<Record<number, string[]>>({});
+  const [structuredAnswers, setStructuredAnswers] = useState<StructuredAnswerMap>({});
   const [isReviewing, setIsReviewing] = useState(false);
   const [region, setRegion] = useState("");
   const [subregion, setSubregion] = useState("");
@@ -2165,11 +2475,13 @@ function IntakeCard({
   const currentAnswer = isRegionStep || isUtilityStep ? "" : answers[answerIndex] ?? "";
   const currentSelectedOptions = isRegionStep || isUtilityStep ? [] : selectedOptions[answerIndex] ?? [];
   const currentMeta = isRegionStep || isUtilityStep ? undefined : metadata[answerIndex];
-  const currentOptions = isRegionStep || isUtilityStep
+  const isWorkerDetailsStep = selectedSituation.id === "wages" && answerIndex === 0;
+  const isEmploymentDetailsStep = selectedSituation.id === "wages" && answerIndex === 2;
+  const currentOptions = isRegionStep || isUtilityStep || isEmploymentDetailsStep
     ? []
     : getQuestionOptions(selectedSituation.id, answerIndex, language, currentMeta);
   const currentFiles = isRegionStep || isUtilityStep ? [] : attachments[answerIndex] ?? [];
-  const selectedRegionGroup = regionGroups.find((item) => item.label === region);
+  const selectedRegionGroup = expandedRegionGroups.find((item) => item.label === region);
   const completedRegion = region ? (subregion ? `${region} ${subregion}` : region) : "지역 미선택";
   const displayRegionsInEnglish = language !== "ko";
   const laborCalculation =
@@ -2179,6 +2491,11 @@ function IntakeCard({
   const showLaborCalculator = isWageCalculatorStep;
   const showWageLawMapper = isWageLawStep;
   const selectedWageLawOptions = selectedOptions[WAGE_LAW_OPTION_INDEX] ?? [];
+  const structuredCopy = structuredQuestionCopy[language];
+  const uploadPickerText = uploadPickerCopy[language] ?? uploadPickerCopy.en;
+  const selectedDetailOption = currentSelectedOptions.find(isDetailOption);
+  const shouldShowTextAnswer = currentOptions.length === 0 || Boolean(selectedDetailOption);
+  const currentStructuredFields = structuredAnswers[answerIndex] ?? {};
   const utilityStepComplete = isWageLawStep
     ? selectedWageLawOptions.length > 0
     : isWageCalculatorStep
@@ -2190,6 +2507,7 @@ function IntakeCard({
     setAnswers(Array(baseQuestions.length).fill(""));
     setAttachments({});
     setSelectedOptions({});
+    setStructuredAnswers({});
     setIsReviewing(false);
     setRegion("");
     setSubregion("");
@@ -2226,9 +2544,6 @@ function IntakeCard({
       selectedOptions,
     };
     onPdfReady(completed);
-    void submitIntakeToConvex(completed).catch((error) => {
-      console.warn("LinkUP submission was not saved.", error);
-    });
     window.location.hash = "output";
   };
 
@@ -2242,10 +2557,24 @@ function IntakeCard({
     const nextSelected = currentSelectedOptions.includes(option)
       ? currentSelectedOptions.filter((item) => item !== option)
       : [...currentSelectedOptions, option];
+    const hadDetailOption = currentSelectedOptions.some(isDetailOption);
+    const hasDetailOption = nextSelected.some(isDetailOption);
     setSelectedOptions((current) => ({
       ...current,
       [answerIndex]: nextSelected,
     }));
+    setAnswers((current) => {
+      const next = [...current];
+      const previousOptionSummary = currentSelectedOptions.join(", ");
+      if (hasDetailOption) {
+        next[answerIndex] = hadDetailOption && current[answerIndex] !== previousOptionSummary
+          ? current[answerIndex]
+          : "";
+      } else {
+        next[answerIndex] = nextSelected.join(", ");
+      }
+      return next;
+    });
     onPdfReset();
   };
 
@@ -2282,6 +2611,31 @@ function IntakeCard({
     setAnswers((current) => {
       const next = [...current];
       next[answerIndex] = value;
+      return next;
+    });
+    onPdfReset();
+  };
+
+  const updateStructuredField = (field: string, value: string) => {
+    if (answerIndex < 0) {
+      return;
+    }
+
+    setStructuredAnswers((current) => {
+      const existing = current[answerIndex] ?? {};
+      const nextFields = { ...existing, [field]: value };
+      if (field === "status" && value !== structuredQuestionCopy[language].stoppedWorking) {
+        delete nextFields.endDate;
+      }
+      const next = { ...current, [answerIndex]: nextFields };
+      const composed = answerIndex === 0
+        ? composeWorkerDetails(nextFields, language)
+        : composeEmploymentDetails(nextFields, language);
+      setAnswers((currentAnswers) => {
+        const nextAnswers = [...currentAnswers];
+        nextAnswers[answerIndex] = composed;
+        return nextAnswers;
+      });
       return next;
     });
     onPdfReset();
@@ -2425,7 +2779,7 @@ function IntakeCard({
                   value={region}
                 >
                   <option value="">{text.regionParentPlaceholder}</option>
-                  {regionGroups.map((item) => (
+                  {expandedRegionGroups.map((item) => (
                     <option key={item.label} value={item.label}>
                       {displayRegionsInEnglish ? item.labelEn : item.label}
                     </option>
@@ -2452,9 +2806,101 @@ function IntakeCard({
                 </label>
               ) : null}
             </>
+          ) : currentOptions.length && !shouldShowTextAnswer ? null : isWorkerDetailsStep ? (
+            <div className="structured-fields">
+              <label className="input-label">
+                <span>{structuredCopy.name}</span>
+                <input
+                  onChange={(event: { currentTarget: HTMLInputElement }) =>
+                    updateStructuredField("name", event.currentTarget.value)
+                  }
+                  value={currentStructuredFields.name ?? ""}
+                />
+              </label>
+              <label className="input-label">
+                <span>{structuredCopy.visa}</span>
+                <input
+                  onChange={(event: { currentTarget: HTMLInputElement }) =>
+                    updateStructuredField("visa", event.currentTarget.value)
+                  }
+                  value={currentStructuredFields.visa ?? ""}
+                />
+              </label>
+              <label className="input-label">
+                <span>{structuredCopy.contact}</span>
+                <input
+                  onChange={(event: { currentTarget: HTMLInputElement }) =>
+                    updateStructuredField("contact", event.currentTarget.value)
+                  }
+                  value={currentStructuredFields.contact ?? ""}
+                />
+              </label>
+            </div>
+          ) : isEmploymentDetailsStep ? (
+            <div className="structured-fields">
+              <label className="input-label">
+                <span>{structuredCopy.startDate}</span>
+                <input
+                  onChange={(event: { currentTarget: HTMLInputElement }) =>
+                    updateStructuredField("startDate", event.currentTarget.value)
+                  }
+                  placeholder="YYYY-MM-DD"
+                  value={currentStructuredFields.startDate ?? ""}
+                />
+              </label>
+              {currentStructuredFields.startDate ? (
+                <fieldset className="branch-field">
+                  <legend>{structuredCopy.currentJob}</legend>
+                  {[structuredCopy.stillWorking, structuredCopy.stoppedWorking].map((option) => (
+                    <label className="mcq-option" key={option}>
+                      <input
+                        checked={currentStructuredFields.status === option}
+                        onChange={() => updateStructuredField("status", option)}
+                        type="radio"
+                      />
+                      <span>{option}</span>
+                    </label>
+                  ))}
+                </fieldset>
+              ) : null}
+              {currentStructuredFields.status === structuredCopy.stoppedWorking ? (
+                <label className="input-label subregion-field">
+                  <span>{structuredCopy.endDate}</span>
+                  <input
+                    onChange={(event: { currentTarget: HTMLInputElement }) =>
+                      updateStructuredField("endDate", event.currentTarget.value)
+                    }
+                    placeholder="YYYY-MM-DD"
+                    value={currentStructuredFields.endDate ?? ""}
+                  />
+                </label>
+              ) : null}
+              {currentStructuredFields.status ? (
+                <fieldset className="branch-field">
+                  <legend>{structuredCopy.contract}</legend>
+                  {[structuredCopy.contractYes, structuredCopy.contractNo, structuredCopy.contractUnsure].map((option) => (
+                    <label className="mcq-option" key={option}>
+                      <input
+                        checked={currentStructuredFields.contract === option}
+                        onChange={() => {
+                          updateStructuredField("contract", option);
+                          setSelectedOptions((current) => ({
+                            ...current,
+                            [answerIndex]: [option],
+                          }));
+                          onPdfReset();
+                        }}
+                        type="radio"
+                      />
+                      <span>{option}</span>
+                    </label>
+                  ))}
+                </fieldset>
+              ) : null}
+            </div>
           ) : (
             <label className="input-label">
-              <span>{text.answerLabel}</span>
+              <span>{selectedDetailOption ?? text.answerLabel}</span>
               <textarea
                 onChange={(event: { currentTarget: HTMLTextAreaElement }) =>
                   updateAnswer(event.currentTarget.value)
@@ -2466,17 +2912,21 @@ function IntakeCard({
           )}
           {currentMeta?.allowUpload ? (
             <label className="input-label upload-label">
-              <span>증거 파일 업로드</span>
+              <span>{structuredCopy.uploadLabel}</span>
               <input
                 accept="image/*,.pdf"
+                className="file-input-native"
                 multiple
                 onChange={(event: { currentTarget: HTMLInputElement }) => updateFiles(event.currentTarget.files)}
                 type="file"
               />
+              <span className="upload-picker-button">{uploadPickerText.choose}</span>
               {currentFiles.length ? (
-                <small>{currentFiles.map((file) => file.name).join(", ")}</small>
+                <small>
+                  {uploadPickerText.selected(currentFiles.length)}: {currentFiles.map((file) => file.name).join(", ")}
+                </small>
               ) : (
-                <small>사진, PDF 등 상담사가 확인할 수 있는 파일을 올릴 수 있습니다.</small>
+                <small>{structuredCopy.uploadEmpty}</small>
               )}
             </label>
           ) : null}
@@ -2679,6 +3129,9 @@ function PdfDownloadPanel({
     setIsTranslating(true);
     try {
       await downloadCounselorPdf(intake);
+      await submitIntakeToConvex(intake).catch((error) => {
+        console.warn("LinkUP submission was not saved.", error);
+      });
       onCompleted();
     } finally {
       setIsTranslating(false);
@@ -3147,7 +3600,14 @@ function buildWageLawGuideKeys({
   mapSelectedWageLawOptions(selectedLawOptions).forEach((key) => keys.add(key));
   inferWageLawKeysFromKoreanText(translatedAnswers.join("\n")).forEach((key) => keys.add(key));
 
-  if (contractStatus.includes("미보유")) {
+  if (
+    contractStatus.includes("미보유") ||
+    contractStatus.includes("No written") ||
+    contractStatus.includes("없어요") ||
+    contractStatus.toLowerCase().includes("không có") ||
+    contractStatus.toLowerCase().includes("tidak ada") ||
+    contractStatus.toLowerCase().includes("walang")
+  ) {
     keys.add("no_written_contract");
   }
 
@@ -3253,6 +3713,13 @@ function readFileAsDataUrl(file: File) {
 async function speakQuestion(question: string, language: LanguageCode): Promise<"missing" | "playing"> {
   stopActiveTts();
 
+  if (shouldPreferRemoteTts(language)) {
+    const remotePlayed = await playRemoteQuestionAudio(question, language);
+    if (remotePlayed) {
+      return "playing";
+    }
+  }
+
   const browserPlayed = await speakQuestionWithBrowserVoice(question, language);
   if (browserPlayed) {
     return "playing";
@@ -3260,6 +3727,10 @@ async function speakQuestion(question: string, language: LanguageCode): Promise<
 
   const fallbackPlayed = await playRemoteQuestionAudio(question, language);
   return fallbackPlayed ? "playing" : "missing";
+}
+
+function shouldPreferRemoteTts(language: LanguageCode) {
+  return language === "vi" || language === "th" || language === "id" || language === "fil";
 }
 
 function stopActiveTts() {
@@ -3281,6 +3752,9 @@ async function speakQuestionWithBrowserVoice(question: string, language: Languag
   const targetLang = getTtsLanguageTag(language);
   const voices = await loadSpeechVoices();
   const voice = chooseSpeechVoice(voices, targetLang);
+  if (!voice) {
+    return false;
+  }
 
   return new Promise<boolean>((resolve) => {
     const utterance = new SpeechSynthesisUtterance(question);
@@ -3324,10 +3798,17 @@ function loadSpeechVoices() {
 function chooseSpeechVoice(voices: SpeechSynthesisVoice[], targetLang: string) {
   const target = targetLang.toLowerCase();
   const base = target.split("-")[0];
+  const languageNameHints: Record<string, string[]> = {
+    fil: ["filipino", "tagalog"],
+    id: ["indonesian", "bahasa indonesia"],
+    th: ["thai"],
+    vi: ["vietnamese"],
+  };
+  const hints = languageNameHints[base] ?? [];
   return (
     voices.find((voice) => voice.lang.toLowerCase() === target) ??
     voices.find((voice) => voice.lang.toLowerCase().startsWith(`${base}-`)) ??
-    voices.find((voice) => voice.name.toLowerCase().includes(base))
+    voices.find((voice) => hints.some((hint) => voice.name.toLowerCase().includes(hint)))
   );
 }
 
@@ -3336,7 +3817,7 @@ async function playRemoteQuestionAudio(question: string, language: LanguageCode)
     return false;
   }
 
-  const targetLang = getTtsLanguageTag(language).split("-")[0];
+  const targetLang = getRemoteTtsLanguageCode(language);
   const fullTargetLang = getTtsLanguageTag(language);
   const text = question.slice(0, 180);
   const sources = [
@@ -3390,6 +3871,17 @@ function getTtsLanguageTag(language: LanguageCode) {
     ko: "ko-KR",
     th: "th-TH",
     vi: "vi-VN",
+  }[language];
+}
+
+function getRemoteTtsLanguageCode(language: LanguageCode) {
+  return {
+    en: "en",
+    fil: "tl",
+    id: "id",
+    ko: "ko",
+    th: "th",
+    vi: "vi",
   }[language];
 }
 
@@ -3492,7 +3984,7 @@ async function fetchAdminStats(): Promise<AdminStats> {
   return normalizeAdminStats(data);
 }
 
-async function resetSavedSubmissions() {
+async function resetSavedSubmissions(resetCode: string) {
   if (!convexSiteUrl) {
     return 0;
   }
@@ -3502,7 +3994,7 @@ async function resetSavedSubmissions() {
     headers: {
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({ adminCode: ADMIN_CODE }),
+    body: JSON.stringify({ adminCode: ADMIN_CODE, resetCode }),
   });
   const data = await response.json();
 
@@ -3828,6 +4320,9 @@ function AdminPage() {
   const [isLoadingStats, setIsLoadingStats] = useState(false);
   const [statsError, setStatsError] = useState("");
   const [resetMessage, setResetMessage] = useState("");
+  const [isResetDialogOpen, setIsResetDialogOpen] = useState(false);
+  const [resetPhrase, setResetPhrase] = useState("");
+  const [resetPassword, setResetPassword] = useState("");
 
   const loadStats = async () => {
     setIsLoadingStats(true);
@@ -3857,19 +4352,33 @@ function AdminPage() {
     setError("That access code is not recognized.");
   };
 
+  const openResetDialog = () => {
+    setResetPhrase("");
+    setResetPassword("");
+    setStatsError("");
+    setResetMessage("");
+    setIsResetDialogOpen(true);
+  };
+
+  const closeResetDialog = () => {
+    setIsResetDialogOpen(false);
+    setResetPhrase("");
+    setResetPassword("");
+  };
+
   const resetResponses = async () => {
-    const confirmed = window.confirm("Reset all saved worker responses and admin charts?");
-    if (!confirmed) {
+    if (resetPhrase !== "delete" || !resetPassword) {
+      setStatsError('Type "delete" and enter the private reset password before resetting.');
       return;
     }
-
     setIsLoadingStats(true);
     setStatsError("");
     setResetMessage("");
     try {
-      const deleted = await resetSavedSubmissions();
+      const deleted = await resetSavedSubmissions(resetPassword);
       setStats(emptyAdminStats);
       setResetMessage(`${deleted} saved responses reset.`);
+      closeResetDialog();
     } catch (resetError) {
       setStatsError(resetError instanceof Error ? resetError.message : "Could not reset responses.");
     } finally {
@@ -3925,7 +4434,7 @@ function AdminPage() {
           <img alt="LinkUP" className="brand-logo" src="/linkup-wordmark.png" />
         </a>
         <div className="admin-actions">
-          <button className="reset-button" disabled={isLoadingStats} onClick={resetResponses} type="button">
+          <button className="reset-button" disabled={isLoadingStats} onClick={openResetDialog} type="button">
             Reset responses
           </button>
           <button
@@ -3943,6 +4452,49 @@ function AdminPage() {
       </header>
       {statsError ? <div className="stats-banner error">{statsError}</div> : null}
       {resetMessage ? <div className="stats-banner success">{resetMessage}</div> : null}
+      {isResetDialogOpen ? (
+        <section className="reset-dialog-backdrop" aria-labelledby="reset-dialog-title" role="dialog" aria-modal="true">
+          <div className="reset-dialog">
+            <p className="directory-label">Protected destructive action</p>
+            <h2 id="reset-dialog-title">Reset all analytics?</h2>
+            <p>
+              This will delete saved anonymous response records and reset the admin charts. This cannot be undone.
+            </p>
+            <label>
+              <span>Type delete to confirm</span>
+              <input
+                autoComplete="off"
+                onChange={(event: { currentTarget: HTMLInputElement }) => setResetPhrase(event.currentTarget.value)}
+                placeholder="delete"
+                value={resetPhrase}
+              />
+            </label>
+            <label>
+              <span>Private reset password</span>
+              <input
+                autoComplete="current-password"
+                onChange={(event: { currentTarget: HTMLInputElement }) => setResetPassword(event.currentTarget.value)}
+                placeholder="Enter reset password"
+                type="password"
+                value={resetPassword}
+              />
+            </label>
+            <div className="reset-dialog-actions">
+              <button className="logout-button" disabled={isLoadingStats} onClick={closeResetDialog} type="button">
+                Cancel
+              </button>
+              <button
+                className="reset-button"
+                disabled={isLoadingStats || resetPhrase !== "delete" || !resetPassword}
+                onClick={resetResponses}
+                type="button"
+              >
+                Permanently reset
+              </button>
+            </div>
+          </div>
+        </section>
+      ) : null}
       <section className="admin-grid" aria-label="NGO analytics dashboard">
         <DashboardHome isLoading={isLoadingStats} onRefresh={loadStats} stats={stats} />
         <CrisisTrends stats={stats} />
@@ -4043,7 +4595,7 @@ function CrisisTrends({ stats }: { stats: AdminStats }) {
             <p className="eyebrow">Last 90 days</p>
             <h2 id="trends-title">Labor crisis spikes by category and region</h2>
           </div>
-          <button className="report-button" type="button">
+          <button className="report-button" onClick={() => downloadRegionalAdvocacyReport(stats)} type="button">
             <FileText size={18} />
             Generate Regional Advocacy Report
           </button>
@@ -4138,6 +4690,144 @@ function buildConicGradient(items: CountItem[]) {
   });
 
   return `conic-gradient(${segments.join(", ")})`;
+}
+
+function downloadRegionalAdvocacyReport(stats: AdminStats) {
+  const generatedAt = new Date();
+  const reportHtml = buildRegionalAdvocacyReportHtml(stats, generatedAt);
+  const blob = new Blob([reportHtml], { type: "text/html;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = `linkup-regional-advocacy-report-${formatDateForFilename(generatedAt)}.html`;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(url);
+}
+
+function buildRegionalAdvocacyReportHtml(stats: AdminStats, generatedAt: Date) {
+  const topCategory = stats.categoryCounts[0];
+  const topRegion = stats.regionCounts[0];
+  const topLanguage = stats.languageCounts[0];
+  const trendSummary = summarizeTrendSeries(stats.trendSeries);
+
+  return `<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>LinkUP Regional Advocacy Report</title>
+  <style>
+    body { background: #f7f3ea; color: #171717; font-family: Inter, Arial, sans-serif; margin: 0; }
+    main { background: #fffdf8; border: 1px solid #d7d0c3; margin: 32px auto; max-width: 920px; padding: 44px; }
+    h1 { font-size: 36px; line-height: 1.05; margin: 10px 0 16px; }
+    h2 { border-top: 1px solid #d7d0c3; font-size: 22px; margin-top: 34px; padding-top: 22px; }
+    p { color: #5f5a52; font-size: 15px; line-height: 1.65; }
+    .eyebrow { color: #2f6f55; font-size: 12px; font-weight: 800; letter-spacing: 0.14em; text-transform: uppercase; }
+    .summary { display: grid; gap: 12px; grid-template-columns: repeat(4, minmax(0, 1fr)); margin: 28px 0; }
+    .metric { border: 1px solid #d7d0c3; padding: 16px; }
+    .metric span { color: #5f5a52; display: block; font-size: 12px; font-weight: 800; text-transform: uppercase; }
+    .metric strong { display: block; font-size: 22px; margin-top: 8px; }
+    table { border-collapse: collapse; margin-top: 12px; width: 100%; }
+    th, td { border-bottom: 1px solid #e4ded2; font-size: 14px; padding: 12px; text-align: left; }
+    th { background: #f3eee5; font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; }
+    .note { background: #eff8f2; border: 1px solid #a8dfbd; color: #065f46; font-weight: 700; padding: 16px; }
+    .footer { color: #7c7469; font-size: 12px; margin-top: 34px; }
+    @media print { body { background: white; } main { border: 0; margin: 0; } }
+  </style>
+</head>
+<body>
+  <main>
+    <p class="eyebrow">South Korea Migrant Worker Support Network</p>
+    <h1>LinkUP Regional Advocacy Report</h1>
+    <p>Generated ${escapeHtml(generatedAt.toLocaleString())}. This report uses anonymous LinkUP intake counts only. It does not include worker names, contact details, employer names, files, dates, exact amounts, or any private intake answers.</p>
+
+    <section class="summary" aria-label="Executive summary">
+      <div class="metric"><span>Total cases</span><strong>${stats.total.toLocaleString()}</strong></div>
+      <div class="metric"><span>Top category</span><strong>${escapeHtml(topCategory?.label ?? "No data")}</strong></div>
+      <div class="metric"><span>Top region</span><strong>${escapeHtml(topRegion?.label ?? "No data")}</strong></div>
+      <div class="metric"><span>Top language</span><strong>${escapeHtml(topLanguage ? formatLanguageName(topLanguage.label) : "No data")}</strong></div>
+    </section>
+
+    <h2>Advocacy Snapshot</h2>
+    <p>${escapeHtml(buildAdvocacySnapshot(stats))}</p>
+    <p class="note">${escapeHtml(buildAdvocacyRecommendation(stats))}</p>
+
+    ${buildReportTable("Crisis Categories", stats.categoryCounts, stats.total)}
+    ${buildReportTable("Regional Distribution", stats.regionCounts, stats.total)}
+    ${buildReportTable("Language Demand", stats.languageCounts.map((item) => ({ ...item, label: formatLanguageName(item.label) })), stats.total)}
+
+    <h2>90-Day Trend Summary</h2>
+    <table>
+      <thead><tr><th>Category</th><th>Latest Count</th><th>90-Day Peak</th><th>Change Signal</th></tr></thead>
+      <tbody>${trendSummary}</tbody>
+    </table>
+
+    <p class="footer">Prepared by LinkUP. Anonymous operational data only. Use this report as an advocacy planning aid, not as legal advice or an official government filing.</p>
+  </main>
+</body>
+</html>`;
+}
+
+function buildReportTable(title: string, rows: CountItem[], total: number) {
+  const body = rows.length
+    ? rows
+      .map((row) => `<tr><td>${escapeHtml(row.label)}</td><td>${row.count.toLocaleString()}</td><td>${formatShare(row.count, total)}</td></tr>`)
+      .join("")
+    : `<tr><td>No saved responses yet</td><td>0</td><td>0%</td></tr>`;
+
+  return `<h2>${escapeHtml(title)}</h2><table><thead><tr><th>Item</th><th>Count</th><th>Share</th></tr></thead><tbody>${body}</tbody></table>`;
+}
+
+function summarizeTrendSeries(series: TrendSeries[]) {
+  if (!series.length) {
+    return `<tr><td>No trend data yet</td><td>0</td><td>0</td><td>No signal</td></tr>`;
+  }
+
+  return series
+    .map((item) => {
+      const latest = item.points.at(-1) ?? 0;
+      const first = item.points[0] ?? 0;
+      const peak = Math.max(...item.points, 0);
+      const signal = latest > first ? "Increasing" : latest < first ? "Decreasing" : "Stable";
+      return `<tr><td>${escapeHtml(item.label)}</td><td>${latest.toLocaleString()}</td><td>${peak.toLocaleString()}</td><td>${signal}</td></tr>`;
+    })
+    .join("");
+}
+
+function buildAdvocacySnapshot(stats: AdminStats) {
+  if (!stats.total) {
+    return "No completed PDF downloads have been recorded yet. Once workers generate PDFs, this report will summarize anonymous crisis, region, and language patterns.";
+  }
+
+  const category = stats.categoryCounts[0];
+  const region = stats.regionCounts[0];
+  const language = stats.languageCounts[0];
+  return `${stats.total.toLocaleString()} completed counselor-packet downloads have been recorded. The leading issue is ${category?.label ?? "unknown"}, the most represented region is ${region?.label ?? "unknown"}, and the highest language demand is ${language ? formatLanguageName(language.label) : "unknown"}.`;
+}
+
+function buildAdvocacyRecommendation(stats: AdminStats) {
+  if (!stats.total) {
+    return "Recommendation: begin outreach once a minimum pattern of completed intakes appears, then compare region and language demand before allocating counselor capacity.";
+  }
+
+  const language = stats.languageCounts[0];
+  const region = stats.regionCounts[0];
+  return `Recommendation: prioritize counselor materials and outreach for ${language ? formatLanguageName(language.label) : "the top requested language"} in ${region?.label ?? "the highest-volume region"}, and review the top crisis category for targeted partner coordination.`;
+}
+
+function escapeHtml(value: string) {
+  return value
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
+}
+
+function formatDateForFilename(value: Date) {
+  return value.toISOString().slice(0, 10);
 }
 
 function MetricCard({

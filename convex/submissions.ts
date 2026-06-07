@@ -2,6 +2,7 @@ import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
 
 const adminCode = "LINKUP-NGO-2026";
+const resetCode = "MINJO-RESET-2026";
 
 const emptyStats = {
   categoryCounts: [],
@@ -48,9 +49,10 @@ export const stats = query({
 export const reset = mutation({
   args: {
     adminCode: v.string(),
+    resetCode: v.string(),
   },
   handler: async (ctx, args) => {
-    if (args.adminCode !== adminCode) {
+    if (args.adminCode !== adminCode || args.resetCode !== resetCode) {
       throw new Error("Unauthorized reset attempt.");
     }
 
