@@ -60,3 +60,29 @@ After import, editing records in the Convex dashboard will update the site throu
 - `convex/schema.ts` - editable guide data model.
 - `convex/guides.ts` - public Convex queries.
 - `convex/seed/guides.jsonl` - starter content for the six situations.
+
+## Optional private Qwen AI server
+
+LinkUP can call a private Qwen/Ollama server for masked intake follow-up questions and legal-key classification.
+The server does not write requests to a database or log the intake body.
+
+1. Install Ollama from `https://ollama.com`.
+2. Pull a Qwen model:
+
+   ```powershell
+   ollama pull qwen2.5:7b-instruct
+   ```
+
+3. Start the LinkUP AI server:
+
+   ```powershell
+   npm run ai:qwen
+   ```
+
+4. Point Convex to the classify endpoint:
+
+   ```powershell
+   npx convex env set LINKUP_AI_URL http://127.0.0.1:8787/classify
+   ```
+
+For a deployed app, host this AI server on your own machine or cloud server and set `LINKUP_AI_URL` to the public HTTPS `/classify` endpoint. If you set `LINKUP_AI_TOKEN`, set the same token in Convex with `npx convex env set LINKUP_AI_TOKEN your-token`.

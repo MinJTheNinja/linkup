@@ -108,6 +108,13 @@ type WageLawGuideEntry = {
   koreanText: string;
 };
 
+type AiAssistResult = {
+  followUpQuestions: string[];
+  legalKeys: WageLawKey[];
+  note: string;
+  source: "ai" | "fallback";
+};
+
 type CountItem = {
   count: number;
   label: string;
@@ -137,6 +144,94 @@ const emptyAdminStats: AdminStats = {
   regionCounts: [],
   trendSeries: [],
   total: 0,
+};
+const aiAssistCopy: Record<
+  LanguageCode,
+  {
+    apply: string;
+    button: string;
+    fallbackNote: string;
+    intro: string;
+    legalTitle: string;
+    loading: string;
+    privacy: string;
+    questionsTitle: string;
+    title: string;
+    unavailable: string;
+  }
+> = {
+  en: {
+    apply: "Apply suggested legal tags",
+    button: "AI intake check",
+    fallbackNote: "Local rule-based guidance was used because no private AI server is configured yet.",
+    intro: "Use this after writing a short description or choosing an option.",
+    legalTitle: "Possible legal guide keys",
+    loading: "Checking the context...",
+    privacy: "Sensitive patterns are masked first. This request is not stored.",
+    questionsTitle: "Follow-up questions to ask",
+    title: "AI-assisted intake",
+    unavailable: "AI intake check is unavailable right now.",
+  },
+  ko: {
+    apply: "추천 법률 태그 적용",
+    button: "AI 인테이크 확인",
+    fallbackNote: "아직 전용 AI 서버가 설정되지 않아 로컬 규칙 기반 안내를 사용했습니다.",
+    intro: "짧은 설명을 쓰거나 선택지를 고른 뒤 눌러보세요.",
+    legalTitle: "가능한 법적 가이드 키",
+    loading: "문맥을 확인하는 중...",
+    privacy: "민감한 패턴을 먼저 가립니다. 이 요청은 저장되지 않습니다.",
+    questionsTitle: "추가로 확인할 질문",
+    title: "AI 보조 인테이크",
+    unavailable: "지금은 AI 인테이크 확인을 사용할 수 없습니다.",
+  },
+  vi: {
+    apply: "Ap dung goi y phap ly",
+    button: "Kiem tra intake bang AI",
+    fallbackNote: "Chua cau hinh may chu AI rieng, nen LinkUP dung huong dan theo quy tac cuc bo.",
+    intro: "Bam sau khi viet mo ta ngan hoac chon dap an.",
+    legalTitle: "Khoa huong dan phap ly co the lien quan",
+    loading: "Dang kiem tra ngu canh...",
+    privacy: "Mau thong tin nhay cam duoc che truoc. Yeu cau nay khong duoc luu.",
+    questionsTitle: "Cau hoi can hoi them",
+    title: "Ho tro intake bang AI",
+    unavailable: "Tam thoi khong dung duoc kiem tra AI.",
+  },
+  th: {
+    apply: "ใช้แท็กกฎหมายที่แนะนำ",
+    button: "ตรวจ intake ด้วย AI",
+    fallbackNote: "ยังไม่ได้ตั้งค่าเซิร์ฟเวอร์ AI ส่วนตัว จึงใช้คำแนะนำตามกฎในระบบ",
+    intro: "กดหลังจากเขียนคำอธิบายสั้น ๆ หรือเลือกคำตอบแล้ว",
+    legalTitle: "คีย์กฎหมายที่อาจเกี่ยวข้อง",
+    loading: "กำลังตรวจบริบท...",
+    privacy: "ระบบปิดบังข้อมูลอ่อนไหวก่อน และไม่เก็บคำขอนี้",
+    questionsTitle: "คำถามเพิ่มเติมที่ควรถาม",
+    title: "AI ช่วยตรวจ intake",
+    unavailable: "ตอนนี้ยังใช้ AI intake check ไม่ได้",
+  },
+  id: {
+    apply: "Terapkan tag hukum yang disarankan",
+    button: "Cek intake dengan AI",
+    fallbackNote: "Server AI privat belum dikonfigurasi, jadi LinkUP memakai panduan aturan lokal.",
+    intro: "Gunakan setelah menulis deskripsi singkat atau memilih opsi.",
+    legalTitle: "Kunci panduan hukum yang mungkin cocok",
+    loading: "Memeriksa konteks...",
+    privacy: "Pola sensitif disamarkan dahulu. Permintaan ini tidak disimpan.",
+    questionsTitle: "Pertanyaan lanjutan",
+    title: "Intake dibantu AI",
+    unavailable: "Cek intake AI belum tersedia.",
+  },
+  fil: {
+    apply: "Ilapat ang suggested legal tags",
+    button: "AI intake check",
+    fallbackNote: "Wala pang private AI server, kaya local rule-based guidance muna ang ginamit.",
+    intro: "Gamitin pagkatapos magsulat ng maikling paliwanag o pumili ng sagot.",
+    legalTitle: "Posibleng legal guide keys",
+    loading: "Tinitingnan ang context...",
+    privacy: "Minamask muna ang sensitibong pattern. Hindi ini-store ang request na ito.",
+    questionsTitle: "Mga follow-up na tanong",
+    title: "AI-assisted intake",
+    unavailable: "Hindi available ngayon ang AI intake check.",
+  },
 };
 const regionGroups = [
   {
@@ -329,6 +424,22 @@ const languages: Array<{ code: LanguageCode; flagSrc: string; label: string; sho
   { code: "fil", flagSrc: "/flags/ph.svg", label: "Filipino", shortLabel: "PH" },
 ];
 const selectableLanguages = languages.filter((item) => item.code !== "ko");
+const futureLanguages = [
+  "Español (Spanish)",
+  "العربية (Arabic)",
+  "Français (French)",
+  "简体中文 (Simplified Chinese)",
+  "한국어 (Korean)",
+  "Português (Portuguese)",
+  "Українська (Ukrainian)",
+  "မြန်မာ (Burmese)",
+  "हिन्दी (Hindi)",
+  "नेपाली (Nepali)",
+  "ਪੰਜਾਬੀ (Punjabi)",
+  "Kiswahili (Swahili)",
+  "Af Soomaali (Somali)",
+  "اردو (Urdu)",
+];
 
 const copy = {
   en: {
@@ -940,7 +1051,7 @@ const triageDiscoveryCopy: Record<
   { popular: string; results: string; noResults: string; searchHint: string; searchExample: string }
 > = {
   en: {
-    popular: "Frequently searched",
+    popular: "All situations",
     results: "Suggested support",
     noResults: "No matching situation yet. Try a simpler word such as pay, hospital, visa, safety, or housing.",
     searchHint: "Describe what happened in a few words",
@@ -968,18 +1079,72 @@ const triageDiscoveryCopy: Record<
     searchExample: "ลองใช้คำสั้น ๆ: ค่าจ้าง, โรงพยาบาล, บาดเจ็บ, วีซ่า, สัญญา, ความปลอดภัย, ที่พัก",
   },
   id: {
-    popular: "Sering dicari",
+    popular: "Semua situasi",
     results: "Dukungan yang disarankan",
     noResults: "Belum ada situasi yang cocok. Coba kata sederhana seperti gaji, rumah sakit, visa, keselamatan, atau tempat tinggal.",
     searchHint: "Jelaskan singkat apa yang terjadi",
     searchExample: "Coba kata kunci singkat: gaji, rumah sakit, cedera, visa, kontrak, keselamatan, tempat tinggal",
   },
   fil: {
-    popular: "Madalas hanapin",
+    popular: "Lahat ng sitwasyon",
     results: "Iminungkahing suporta",
     noResults: "Wala pang tugmang sitwasyon. Subukan ang simpleng salita tulad ng sahod, ospital, visa, kaligtasan, o tirahan.",
     searchHint: "Ilarawan nang maikli ang nangyari",
     searchExample: "Subukan ang maiikling keyword: sahod, ospital, pinsala, visa, kontrata, kaligtasan, tirahan",
+  },
+};
+
+const scenarioLibraryCopy: Record<
+  LanguageCode,
+  { close: string; next: string; page: (current: number, total: number) => string; previous: string; title: string; viewAll: string }
+> = {
+  en: {
+    close: "Close",
+    next: "Next",
+    page: (current, total) => `${current} / ${total}`,
+    previous: "Previous",
+    title: "All situations",
+    viewAll: "View all",
+  },
+  ko: {
+    close: "닫기",
+    next: "다음",
+    page: (current, total) => `${current} / ${total}`,
+    previous: "이전",
+    title: "모든 상황",
+    viewAll: "전체 보기",
+  },
+  vi: {
+    close: "Dong",
+    next: "Tiep",
+    page: (current, total) => `${current} / ${total}`,
+    previous: "Truoc",
+    title: "Tat ca tinh huong",
+    viewAll: "Xem tat ca",
+  },
+  th: {
+    close: "ปิด",
+    next: "ถัดไป",
+    page: (current, total) => `${current} / ${total}`,
+    previous: "ก่อนหน้า",
+    title: "สถานการณ์ทั้งหมด",
+    viewAll: "ดูทั้งหมด",
+  },
+  id: {
+    close: "Tutup",
+    next: "Berikutnya",
+    page: (current, total) => `${current} / ${total}`,
+    previous: "Sebelumnya",
+    title: "Semua situasi",
+    viewAll: "Lihat semua",
+  },
+  fil: {
+    close: "Isara",
+    next: "Susunod",
+    page: (current, total) => `${current} / ${total}`,
+    previous: "Nakaraan",
+    title: "Lahat ng sitwasyon",
+    viewAll: "Tingnan lahat",
   },
 };
 
@@ -2036,7 +2201,8 @@ function WorkerSite() {
   const [completedIntake, setCompletedIntake] = useState<CompletedIntake | null>(null);
   const [resetToken, setResetToken] = useState(0);
   const [triageSearch, setTriageSearch] = useState("");
-  const [isLanguageMenuOpen, setIsLanguageMenuOpen] = useState(false);
+  const [isScenarioLibraryOpen, setIsScenarioLibraryOpen] = useState(false);
+  const [isLanguageModalOpen, setIsLanguageModalOpen] = useState(false);
   const [showLanguageModal, setShowLanguageModal] = useState(
     () => localStorage.getItem("linkup-language-selected") !== "true",
   );
@@ -2047,7 +2213,7 @@ function WorkerSite() {
     const searchText = `${situation.label[language]} ${situation.detail[language]} ${situation.label.en} ${situation.detail.en} ${situationSearchTerms[situation.id] ?? ""}`.toLowerCase();
     return searchText.includes(normalizedTriageSearch);
   });
-  const suggestedSituations = normalizedTriageSearch ? filteredSituations.slice(0, 3) : [];
+  const suggestedSituations = normalizedTriageSearch ? filteredSituations : [];
   const popularSituations = situations.slice(0, 3);
   const selectedSituation = useMemo(
     () => situations.find((situation) => situation.id === selectedIssue) ?? null,
@@ -2066,13 +2232,14 @@ function WorkerSite() {
     localStorage.setItem("linkup-language", nextLanguage);
     localStorage.setItem("linkup-language-selected", "true");
     setShowLanguageModal(false);
-    setIsLanguageMenuOpen(false);
+    setIsLanguageModalOpen(false);
   };
 
   const chooseIssue = (issueId: string) => {
     setSelectedIssue(issueId);
     setIsPdfReady(false);
     setCompletedIntake(null);
+    setIsScenarioLibraryOpen(false);
     window.setTimeout(() => {
       document.getElementById("intake")?.scrollIntoView({ behavior: "smooth", block: "start" });
     }, 100);
@@ -2089,7 +2256,22 @@ function WorkerSite() {
   return (
     <main className="site-shell" lang={language}>
       {showLanguageModal ? (
-        <LanguageChoiceModal selectedLanguage={language} onSelect={chooseLanguage} />
+        <LanguageChoiceModal selectedLanguage={language} onClose={undefined} onSelect={chooseLanguage} />
+      ) : null}
+      {isLanguageModalOpen ? (
+        <LanguageChoiceModal
+          selectedLanguage={language}
+          onClose={() => setIsLanguageModalOpen(false)}
+          onSelect={chooseLanguage}
+        />
+      ) : null}
+      {isScenarioLibraryOpen ? (
+        <ScenarioLibraryModal
+          language={language}
+          onClose={() => setIsScenarioLibraryOpen(false)}
+          onSelect={chooseIssue}
+          selectedIssue={selectedIssue}
+        />
       ) : null}
       <header className="site-nav">
         <a className="brand-link" href="#top" aria-label="LinkUP home" onClick={resetWorkerHome}>
@@ -2097,9 +2279,7 @@ function WorkerSite() {
         </a>
         <nav aria-label="Primary navigation">
           <LanguageSelector
-            isOpen={isLanguageMenuOpen}
-            onSelect={chooseLanguage}
-            onToggle={() => setIsLanguageMenuOpen((current) => !current)}
+            onOpen={() => setIsLanguageModalOpen(true)}
             selectedLanguage={language}
           />
           <a href="#/how-it-works">{text.howThisWorks}</a>
@@ -2137,7 +2317,12 @@ function WorkerSite() {
             <p className="triage-search-example">{discoveryText.searchExample}</p>
             {!normalizedTriageSearch ? (
               <div className="popular-situations">
-                <p>{discoveryText.popular}</p>
+                <div className="popular-situations-header">
+                  <button onClick={() => setIsScenarioLibraryOpen(true)} type="button">
+                    {scenarioLibraryCopy[language].viewAll}
+                    <ArrowRight size={15} />
+                  </button>
+                </div>
                 <div className="popular-situation-list">
                   {popularSituations.map(({ icon: Icon, id, label }) => (
                     <button
@@ -2229,6 +2414,86 @@ function WorkerSite() {
   );
 }
 
+function ScenarioLibraryModal({
+  language,
+  onClose,
+  onSelect,
+  selectedIssue,
+}: {
+  language: LanguageCode;
+  onClose: () => void;
+  onSelect: (issueId: string) => void;
+  selectedIssue: string | null;
+}) {
+  const [pageIndex, setPageIndex] = useState(0);
+  const modalText = scenarioLibraryCopy[language] ?? scenarioLibraryCopy.en;
+  const pageSize = 6;
+  const totalPages = Math.max(1, Math.ceil(situations.length / pageSize));
+  const safePageIndex = Math.min(pageIndex, totalPages - 1);
+  const visibleSituations = situations.slice(safePageIndex * pageSize, safePageIndex * pageSize + pageSize);
+
+  return (
+    <div className="scenario-modal-backdrop" role="presentation">
+      <section
+        aria-labelledby="scenario-library-title"
+        aria-modal="true"
+        className="scenario-modal"
+        role="dialog"
+      >
+        <header className="scenario-modal-header">
+          <div>
+            <p className="eyebrow">{modalText.viewAll}</p>
+            <h2 id="scenario-library-title">{modalText.title}</h2>
+          </div>
+          <button className="scenario-modal-close" onClick={onClose} type="button">
+            <span aria-hidden="true">×</span>
+            <span className="sr-only">{modalText.close}</span>
+          </button>
+        </header>
+
+        <div className="scenario-modal-grid">
+          {visibleSituations.map(({ detail, icon: Icon, id, label, tone }, index) => (
+            <button
+              className={`scenario-modal-card ${tone} ${selectedIssue === id ? "selected" : ""}`}
+              key={id}
+              onClick={() => onSelect(id)}
+              type="button"
+            >
+              <span className="scenario-number">{String(safePageIndex * pageSize + index + 1).padStart(2, "0")}</span>
+              <span className="scenario-card-icon">
+                <Icon size={24} />
+              </span>
+              <strong>{label[language]}</strong>
+              <small>{detail[language]}</small>
+              {selectedIssue === id ? <CheckCircle2 size={18} /> : <ArrowRight size={18} />}
+            </button>
+          ))}
+        </div>
+
+        <footer className="scenario-modal-footer">
+          <button
+            disabled={safePageIndex === 0}
+            onClick={() => setPageIndex((current) => Math.max(0, current - 1))}
+            type="button"
+          >
+            <span aria-hidden="true">←</span>
+            {modalText.previous}
+          </button>
+          <span>{modalText.page(safePageIndex + 1, totalPages)}</span>
+          <button
+            disabled={safePageIndex >= totalPages - 1}
+            onClick={() => setPageIndex((current) => Math.min(totalPages - 1, current + 1))}
+            type="button"
+          >
+            {modalText.next}
+            <span aria-hidden="true">→</span>
+          </button>
+        </footer>
+      </section>
+    </div>
+  );
+}
+
 function getSavedLanguage(): LanguageCode {
   const savedLanguage = localStorage.getItem("linkup-language");
   return savedLanguage === "en" ||
@@ -2241,14 +2506,10 @@ function getSavedLanguage(): LanguageCode {
 }
 
 function LanguageSelector({
-  isOpen,
-  onSelect,
-  onToggle,
+  onOpen,
   selectedLanguage,
 }: {
-  isOpen: boolean;
-  onSelect: (language: LanguageCode) => void;
-  onToggle: () => void;
+  onOpen: () => void;
   selectedLanguage: LanguageCode;
 }) {
   const selected = selectableLanguages.find((item) => item.code === selectedLanguage) ?? selectableLanguages[0];
@@ -2256,63 +2517,73 @@ function LanguageSelector({
   return (
     <div className="language-picker">
       <button
-        aria-expanded={isOpen}
-        aria-haspopup="listbox"
+        aria-haspopup="dialog"
         className="language-current"
-        onClick={onToggle}
+        onClick={onOpen}
         type="button"
       >
         <img alt="" aria-hidden="true" className="language-flag-img" src={selected.flagSrc} />
         <span>{selected.label}</span>
         <ChevronDown size={17} />
       </button>
-      {isOpen ? (
-        <div className="language-menu" role="listbox" aria-label="Choose interface language">
-          {selectableLanguages.map((item) => (
-            <button
-              aria-selected={item.code === selectedLanguage}
-              className={item.code === selectedLanguage ? "selected" : ""}
-              key={item.code}
-              onClick={() => onSelect(item.code)}
-              role="option"
-              type="button"
-            >
-              <img alt="" aria-hidden="true" className="language-flag-img" src={item.flagSrc} />
-              <span>{item.label}</span>
-              <small>{item.shortLabel}</small>
-            </button>
-          ))}
-        </div>
-      ) : null}
     </div>
   );
 }
 
 function LanguageChoiceModal({
+  onClose,
   onSelect,
   selectedLanguage,
 }: {
+  onClose?: (() => void) | undefined;
   onSelect: (language: LanguageCode) => void;
   selectedLanguage: LanguageCode;
 }) {
+  const [query, setQuery] = useState("");
+  const normalizedQuery = query.trim().toLowerCase();
+  const visibleSelectableLanguages = selectableLanguages.filter((item) =>
+    `${item.label} ${item.shortLabel}`.toLowerCase().includes(normalizedQuery),
+  );
+
   return (
     <div className="language-modal-backdrop" role="presentation">
       <section className="language-modal" aria-labelledby="language-modal-title" role="dialog" aria-modal="true">
-        <p className="eyebrow">Welcome to LinkUP</p>
-        <h2 id="language-modal-title">Choose your language</h2>
-        <p>This helps LinkUP show questions and guidance in the language that feels safest for you.</p>
-        <div className="language-modal-grid">
-          {selectableLanguages.map((item) => (
-            <button
-              className={item.code === selectedLanguage ? "selected" : ""}
-              key={item.code}
-              onClick={() => onSelect(item.code)}
-              type="button"
-            >
-              <img alt="" aria-hidden="true" className="language-flag-img" src={item.flagSrc} />
-              <span>{item.label}</span>
-            </button>
-          ))}
+        {onClose ? (
+          <button className="language-modal-close" onClick={onClose} type="button" aria-label="Close language chooser">
+            ×
+          </button>
+        ) : null}
+        <h2 id="language-modal-title">
+          <Globe2 size={28} />
+          Choose your language
+        </h2>
+        <label className="language-modal-search">
+          <Search size={24} />
+          <input
+            autoFocus
+            onChange={(event: { currentTarget: HTMLInputElement }) => setQuery(event.currentTarget.value)}
+            placeholder="Search languages"
+            type="search"
+            value={query}
+          />
+        </label>
+        <div className="language-library-grid supported-only">
+          <section>
+            <h3>Read this page in:</h3>
+            <div className="language-library-list">
+              {visibleSelectableLanguages.map((item) => (
+                <button
+                  className={item.code === selectedLanguage ? "selected" : ""}
+                  key={item.code}
+                  onClick={() => onSelect(item.code)}
+                  type="button"
+                >
+                  <span>{item.code === selectedLanguage ? "✓" : ""}</span>
+                  <span>{item.label}</span>
+                </button>
+              ))}
+            </div>
+          </section>
         </div>
       </section>
     </div>
@@ -2345,7 +2616,7 @@ function composeEmploymentDetails(fields: Record<string, string>, language: Lang
 
 function HowItWorksPage() {
   const [selectedLanguage, setSelectedLanguage] = useState<LanguageCode>(() => getSavedLanguage());
-  const [isLanguageMenuOpen, setIsLanguageMenuOpen] = useState(false);
+  const [isLanguageModalOpen, setIsLanguageModalOpen] = useState(false);
   const text = copy[selectedLanguage];
   const pageText = howPageCopy[selectedLanguage];
   const steps = pageText.steps.map((step, index) => ({
@@ -2355,20 +2626,25 @@ function HowItWorksPage() {
   const chooseLanguage = (nextLanguage: LanguageCode) => {
     localStorage.setItem("linkup-language", nextLanguage);
     setSelectedLanguage(nextLanguage);
-    setIsLanguageMenuOpen(false);
+    setIsLanguageModalOpen(false);
   };
 
   return (
     <main className="site-shell how-page" lang={selectedLanguage}>
+      {isLanguageModalOpen ? (
+        <LanguageChoiceModal
+          selectedLanguage={selectedLanguage}
+          onClose={() => setIsLanguageModalOpen(false)}
+          onSelect={chooseLanguage}
+        />
+      ) : null}
       <header className="site-nav">
         <a className="brand-link" href="#/" aria-label="LinkUP worker site">
           <img alt="LinkUP" className="brand-logo" src="/linkup-wordmark.png" />
         </a>
         <nav aria-label="Primary navigation">
           <LanguageSelector
-            isOpen={isLanguageMenuOpen}
-            onSelect={chooseLanguage}
-            onToggle={() => setIsLanguageMenuOpen((current) => !current)}
+            onOpen={() => setIsLanguageModalOpen(true)}
             selectedLanguage={selectedLanguage}
           />
           <a href="#/">{pageText.backToWorker}</a>
@@ -2459,6 +2735,8 @@ function IntakeCard({
     recentWageTotal: "",
     startDate: "",
   });
+  const [aiAssistResult, setAiAssistResult] = useState<AiAssistResult | null>(null);
+  const [aiAssistStatus, setAiAssistStatus] = useState<"idle" | "loading" | "error">("idle");
   const answerIndex = questionIndex - 1;
   const baseStepCount = questions.length;
   const wageUtilityStepCount = selectedSituation.id === "wages" ? 2 : 0;
@@ -2501,6 +2779,13 @@ function IntakeCard({
     : isWageCalculatorStep
       ? Boolean(laborCalculation)
       : false;
+  const aiText = aiAssistCopy[language] ?? aiAssistCopy.en;
+  const canUseAiAssist =
+    !isRegionStep &&
+    !isUtilityStep &&
+    !isWorkerDetailsStep &&
+    !isEmploymentDetailsStep &&
+    (currentAnswer.trim() || currentSelectedOptions.length > 0);
 
   useEffect(() => {
     setQuestionIndex(0);
@@ -2517,11 +2802,15 @@ function IntakeCard({
       recentWageTotal: "",
       startDate: "",
     });
+    setAiAssistResult(null);
+    setAiAssistStatus("idle");
     onPdfReset();
   }, [selectedSituation, resetToken]);
 
   useEffect(() => {
     setTtsStatus("");
+    setAiAssistResult(null);
+    setAiAssistStatus("idle");
   }, [language, questionIndex]);
 
   const continueToOutput = () => {
@@ -2638,6 +2927,42 @@ function IntakeCard({
       });
       return next;
     });
+    onPdfReset();
+  };
+
+  const runAiAssist = async () => {
+    if (!canUseAiAssist) {
+      return;
+    }
+
+    setAiAssistStatus("loading");
+    setAiAssistResult(null);
+    try {
+      const result = await requestAiIntakeAssist({
+        answer: currentAnswer,
+        issueId: selectedSituation.id,
+        language,
+        selectedOptions: currentSelectedOptions,
+      });
+      setAiAssistResult(result);
+      setAiAssistStatus("idle");
+    } catch {
+      setAiAssistStatus("error");
+    }
+  };
+
+  const applyAiLegalTags = () => {
+    if (!aiAssistResult?.legalKeys.length) {
+      return;
+    }
+
+    const recommendedLabels = aiAssistResult.legalKeys.map(
+      (key) => wageLawOptionLabels[key][language] ?? wageLawOptionLabels[key].en,
+    );
+    setSelectedOptions((current) => ({
+      ...current,
+      [WAGE_LAW_OPTION_INDEX]: [...new Set([...(current[WAGE_LAW_OPTION_INDEX] ?? []), ...recommendedLabels])],
+    }));
     onPdfReset();
   };
 
@@ -2931,6 +3256,49 @@ function IntakeCard({
             </label>
           ) : null}
         </div>
+      ) : null}
+      {canUseAiAssist ? (
+        <section className="ai-assist-panel" aria-live="polite">
+          <div className="ai-assist-header">
+            <div>
+              <strong>{aiText.title}</strong>
+              <p>{aiText.intro}</p>
+            </div>
+            <button className="ai-assist-button" disabled={aiAssistStatus === "loading"} onClick={runAiAssist} type="button">
+              {aiAssistStatus === "loading" ? aiText.loading : aiText.button}
+            </button>
+          </div>
+          <p className="ai-assist-privacy">{aiText.privacy}</p>
+          {aiAssistStatus === "error" ? <p className="ai-assist-error">{aiText.unavailable}</p> : null}
+          {aiAssistResult ? (
+            <div className="ai-assist-results">
+              <div>
+                <h4>{aiText.questionsTitle}</h4>
+                <ul>
+                  {aiAssistResult.followUpQuestions.map((question) => (
+                    <li key={question}>{question}</li>
+                  ))}
+                </ul>
+              </div>
+              {aiAssistResult.legalKeys.length ? (
+                <div>
+                  <h4>{aiText.legalTitle}</h4>
+                  <div className="ai-legal-tags">
+                    {aiAssistResult.legalKeys.map((key) => (
+                      <span key={key}>{wageLawOptionLabels[key][language] ?? wageLawOptionLabels[key].en}</span>
+                    ))}
+                  </div>
+                  {selectedSituation.id === "wages" ? (
+                    <button className="ai-apply-button" onClick={applyAiLegalTags} type="button">
+                      {aiText.apply}
+                    </button>
+                  ) : null}
+                </div>
+              ) : null}
+              <small>{aiAssistResult.note}</small>
+            </div>
+          ) : null}
+        </section>
       ) : null}
       {showWageLawMapper ? (
         <WageLawMapperModule
@@ -3942,6 +4310,174 @@ function normalizeTranslationSource(sourceLanguage: LanguageCode) {
     sourceLanguage === "en"
     ? sourceLanguage
     : "en";
+}
+
+async function requestAiIntakeAssist({
+  answer,
+  issueId,
+  language,
+  selectedOptions,
+}: {
+  answer: string;
+  issueId: string;
+  language: LanguageCode;
+  selectedOptions: string[];
+}): Promise<AiAssistResult> {
+  const maskedText = maskSensitiveText([answer, ...selectedOptions].join("\n"));
+  if (!maskedText.trim()) {
+    return buildLocalAiAssistResult("", selectedOptions, language);
+  }
+
+  if (convexSiteUrl) {
+    const response = await fetch(`${convexSiteUrl}/ai-intake-assist`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        allowedLegalKeys: wageLawOptionKeys,
+        issueId,
+        language,
+        maskedText,
+        selectedOptions: selectedOptions.map(maskSensitiveText),
+      }),
+    });
+    const data = await response.json().catch(() => ({}));
+
+    if (response.ok && isRecord(data)) {
+      return normalizeAiAssistResult(data, selectedOptions, language);
+    }
+  }
+
+  return buildLocalAiAssistResult(maskedText, selectedOptions, language);
+}
+
+function maskSensitiveText(text: string) {
+  return text
+    .replace(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/gi, "[masked-email]")
+    .replace(/(?:\+?\d[\d\s().-]{7,}\d)/g, "[masked-number]")
+    .replace(/\b\d{2,4}[-./]\d{1,2}[-./]\d{1,2}\b/g, "[masked-date]")
+    .replace(/[0-9,]{4,}\s*(?:won|krw|원|₩)?/gi, "[masked-amount]")
+    .replace(/\b(?:my name is|name is|I am|I'm)\s+[A-Za-z][A-Za-z\s.'-]{1,40}/gi, "my name is [masked-name]")
+    .slice(0, 1200);
+}
+
+function normalizeAiAssistResult(
+  data: Record<string, unknown>,
+  selectedOptions: string[],
+  language: LanguageCode,
+): AiAssistResult {
+  const legalKeys = Array.isArray(data.legalKeys)
+    ? data.legalKeys.filter(isWageLawKey).slice(0, 6)
+    : buildLocalAiAssistResult("", selectedOptions, language).legalKeys;
+
+  return {
+    followUpQuestions: Array.isArray(data.followUpQuestions)
+      ? data.followUpQuestions.filter((item): item is string => typeof item === "string").slice(0, 4)
+      : [],
+    legalKeys,
+    note:
+      typeof data.note === "string" && data.note.trim()
+        ? data.note.trim()
+        : aiAssistCopy[language].privacy,
+    source: data.source === "ai" ? "ai" : "fallback",
+  };
+}
+
+function buildLocalAiAssistResult(text: string, selectedOptions: string[], language: LanguageCode): AiAssistResult {
+  const haystack = `${text} ${selectedOptions.join(" ")}`.toLowerCase();
+  const legalKeys = new Set<WageLawKey>();
+  const followUpQuestions: string[] = [];
+
+  if (/(salary|wage|pay|paid|월급|임금|급여|lương|gaji|sahod|ค่าแรง)/i.test(haystack)) {
+    legalKeys.add("unpaid_basic_salary");
+    followUpQuestions.push(localFollowUp(language, "payPeriod"));
+  }
+
+  if (/(overtime|night|weekend|holiday|late|10pm|22|주말|야간|연장|휴일|tăng ca|lembur|ล่วงเวลา)/i.test(haystack)) {
+    legalKeys.add("unpaid_overtime_allowance");
+    followUpQuestions.push(localFollowUp(language, "overtime"));
+  }
+
+  if (/(quit|left|resign|fired|dismiss|퇴사|해고|nghỉ|berhenti|tinanggal|ออกจากงาน)/i.test(haystack)) {
+    legalKeys.add("unpaid_exit_clearance");
+    followUpQuestions.push(localFollowUp(language, "lastDay"));
+  }
+
+  if (/(severance|퇴직금|trợ cấp thôi việc|pesangon|severance pay)/i.test(haystack)) {
+    legalKeys.add("unpaid_severance");
+    followUpQuestions.push(localFollowUp(language, "severance"));
+  }
+
+  if (/(contract|계약서|hợp đồng|kontrak|kontrata|สัญญา)/i.test(haystack)) {
+    legalKeys.add("no_written_contract");
+  }
+
+  if (/(pay stub|payslip|명세서|slip gaji|phiếu lương)/i.test(haystack)) {
+    legalKeys.add("no_pay_stub");
+  }
+
+  if (followUpQuestions.length === 0) {
+    followUpQuestions.push(localFollowUp(language, "general"));
+  }
+
+  return {
+    followUpQuestions: [...new Set(followUpQuestions)].slice(0, 4),
+    legalKeys: [...legalKeys].slice(0, 6),
+    note: aiAssistCopy[language].fallbackNote,
+    source: "fallback",
+  };
+}
+
+function localFollowUp(language: LanguageCode, key: "general" | "lastDay" | "overtime" | "payPeriod" | "severance") {
+  const lines: Record<typeof key, Record<LanguageCode, string>> = {
+    general: {
+      en: "What happened, when did it happen, and what proof do you already have?",
+      fil: "Ano ang nangyari, kailan ito nangyari, at anong ebidensya ang mayroon ka?",
+      id: "Apa yang terjadi, kapan terjadi, dan bukti apa yang sudah Anda punya?",
+      ko: "무슨 일이 있었고, 언제 있었으며, 어떤 증거를 가지고 있나요?",
+      th: "เกิดอะไรขึ้น เกิดขึ้นเมื่อไร และตอนนี้มีหลักฐานอะไรบ้าง?",
+      vi: "Chuyen gi da xay ra, khi nao, va ban da co bang chung gi?",
+    },
+    lastDay: {
+      en: "What was your last working day, and has it been more than 14 days since then?",
+      fil: "Kailan ang huling araw mo sa trabaho, at higit 14 araw na ba mula noon?",
+      id: "Kapan hari kerja terakhir Anda, dan apakah sudah lebih dari 14 hari?",
+      ko: "마지막 근무일은 언제였고, 그날 이후 14일이 넘었나요?",
+      th: "วันทำงานวันสุดท้ายคือวันไหน และผ่านไปเกิน 14 วันแล้วหรือยัง?",
+      vi: "Ngay lam viec cuoi cung la khi nao, va da qua hon 14 ngay chua?",
+    },
+    overtime: {
+      en: "How many hours did you work on weekends, holidays, or after 10 PM?",
+      fil: "Ilang oras kang nagtrabaho sa weekend, holiday, o pagkatapos ng 10 PM?",
+      id: "Berapa jam Anda bekerja saat akhir pekan, hari libur, atau setelah jam 10 malam?",
+      ko: "주말, 휴일, 또는 밤 10시 이후에 몇 시간 정도 일했나요?",
+      th: "ทำงานกี่ชั่วโมงในวันหยุด สุดสัปดาห์ หรือหลัง 22:00 น.?",
+      vi: "Ban lam bao nhieu gio vao cuoi tuan, ngay nghi, hoac sau 10 gio dem?",
+    },
+    payPeriod: {
+      en: "Which pay period is missing, and was any partial amount paid?",
+      fil: "Aling panahon ng sahod ang hindi nabayaran, at may bahaging nabayaran ba?",
+      id: "Periode gaji mana yang belum dibayar, dan apakah ada pembayaran sebagian?",
+      ko: "어느 기간의 임금을 받지 못했고, 일부라도 받은 금액이 있나요?",
+      th: "ค่าจ้างช่วงเวลาใดยังไม่ได้รับ และมีจ่ายบางส่วนหรือไม่?",
+      vi: "Ky luong nao chua duoc tra, va co duoc tra mot phan nao khong?",
+    },
+    severance: {
+      en: "Did you work for at least one year, and about how many hours per week did you work?",
+      fil: "Nagtrabaho ka ba nang hindi bababa sa isang taon, at ilang oras bawat linggo?",
+      id: "Apakah Anda bekerja minimal satu tahun, dan kira-kira berapa jam per minggu?",
+      ko: "1년 이상 일했나요? 일주일에 대략 몇 시간 일했나요?",
+      th: "ทำงานอย่างน้อย 1 ปีหรือไม่ และสัปดาห์ละประมาณกี่ชั่วโมง?",
+      vi: "Ban da lam it nhat 1 nam chua, va moi tuan lam khoang bao nhieu gio?",
+    },
+  };
+
+  return lines[key][language] ?? lines[key].en;
+}
+
+function isWageLawKey(value: unknown): value is WageLawKey {
+  return typeof value === "string" && wageLawOptionKeys.includes(value as WageLawKey);
 }
 
 async function submitIntakeToConvex(intake: CompletedIntake) {

@@ -7,8 +7,11 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "preview": "vite preview",
+    "ai:qwen": "node scripts/qwen-ai-server.mjs",
     "convex:dev": "convex dev",
-    "convex:import": "convex import --table guides convex/seed/guides.jsonl"
+    "convex:import": "convex import --table guides convex/seed/guides.jsonl",
+    "promo:render": "remotion render remotion/index.ts LinkUPPromo out/linkup-promo-vertical.mp4 --codec=h264 --pixel-format=yuv420p",
+    "launch:render": "remotion render remotion/index.ts LinkUPLaunch out/linkup-launch-no-human-images.mp4 --codec=h264 --pixel-format=yuv420p"
   },
   "dependencies": {
     "@vitejs/plugin-react": "^5.0.0",
@@ -21,8 +24,10 @@
     "vite": "^7.0.0"
   },
   "devDependencies": {
+    "@remotion/cli": "^4.0.472",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
+    "remotion": "^4.0.472",
     "typescript": "^5.8.0"
   }
 }
