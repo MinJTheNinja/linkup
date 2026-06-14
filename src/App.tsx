@@ -25,6 +25,7 @@ import {
   WalletCards,
 } from "lucide-react";
 import type { CSSProperties } from "react";
+import { Analytics } from "@vercel/analytics/react";
 import { useEffect, useMemo, useState } from "react";
 
 declare global {
@@ -2179,16 +2180,30 @@ export default function App({ useConvex: _useConvex = false }: AppProps) {
   }, []);
 
   if (route === "admin") {
-    return <AdminPage />;
+    return (
+      <>
+        <AdminPage />
+        <Analytics />
+      </>
+    );
   }
 
   if (route === "how-it-works") {
-    return <HowItWorksPage />;
+    return (
+      <>
+        <HowItWorksPage />
+        <Analytics />
+      </>
+    );
   }
 
-  return <WorkerSite />;
+  return (
+    <>
+      <WorkerSite />
+      <Analytics />
+    </>
+  );
 }
-
 function getRouteFromHash(): Route {
   const route = window.location.hash.replace("#/", "");
   return route === "admin" || route === "how-it-works" ? route : "home";
