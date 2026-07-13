@@ -14,6 +14,7 @@
     "launch:render": "remotion render remotion/index.ts LinkUPLaunch out/linkup-launch-no-human-images.mp4 --codec=h264 --pixel-format=yuv420p"
   },
   "dependencies": {
+    "@vercel/analytics": "^2.0.1",
     "@vitejs/plugin-react": "^5.0.0",
     "convex": "^1.28.0",
     "lucide-react": "^0.468.0",
